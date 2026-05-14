@@ -1,0 +1,497 @@
+/* Bilingual content for the Diffusion LLMs explainer.
+   Two top-level locales: en (English), zh (Simplified Chinese).
+   Every key referenced by data-i18n in index.html lives here. */
+
+window.I18N = {
+  en: {
+    'page.title': 'Diffusion LLMs — How They Work, Layer by Layer',
+    'page.desc': 'An interactive, illustrated explainer of diffusion language models for text and code.',
+    'nav.logo': 'Diffusion LLMs',
+    'nav.part1': 'Foundations',
+    'nav.part2': 'Architecture',
+    'nav.part3': 'Training',
+    'nav.part4': 'Inference',
+    'nav.part5': 'The Stacks',
+    'nav.part6': 'Playground',
+    'toc.title': 'Contents',
+
+    // Hero
+    'hero.eyebrow': 'An interactive technical explainer',
+    'hero.titleA': 'Diffusion',
+    'hero.titleB': 'Large Language Models',
+    'hero.subtitle': 'How a model can generate text and code by <em>denoising</em> a tape of <code>[MASK]</code> tokens — and why this matters for the next generation of AI.',
+    'hero.demoLabel': 'A 4-step diffusion decoding of a single sentence — watch the masks resolve',
+    'hero.play': '▶ Play',
+    'hero.reset': '↺ Reset',
+    'hero.metaSections': 'Sections',
+    'hero.metaViz': 'Interactive visualizations',
+    'hero.metaTime': 'Read time',
+    'hero.note': 'This page assumes you know what a Transformer is and roughly how autoregressive (left-to-right) language models like GPT or Llama work. Everything else is built from first principles. Toggle <span class="kbd">EN / 中</span> at the top to switch languages.',
+
+    'viz.play': '▶ Play',
+    'viz.reset': '↺ Reset',
+
+    // Part 1
+    'part1.title': 'Foundations',
+    'part1.tag': 'From image diffusion to discrete tokens — and why the bridge is non-trivial.',
+
+    // §1
+    'sec1.title': 'The Two Ways To Generate',
+    'sec1.p1': 'Every generative model answers one question: <em>given everything I have seen so far, what comes next?</em> Autoregressive language models answer it sequentially — one token at a time, left to right. Each new token is conditioned on the exact text of every token before it. This is what GPT, Llama, Claude, and Gemini (mostly) do.',
+    'sec1.p2': 'Diffusion models answer the same question differently. Instead of building the output one token at a time, they start with a completely corrupted sequence — a tape full of <code>[MASK]</code> — and refine it over a small number of steps, deciding all positions in parallel each step. By the final step, every mask has been replaced with a real token. The model has generated the entire sequence not by writing it, but by <em>uncorrupting</em> it.',
+    'sec1.p3': 'Why would you choose the second approach? Three reasons, which we will unpack throughout this page: <strong>parallelism</strong> (commit many tokens per step → potentially faster), <strong>bidirectionality</strong> (every token sees every other token while generating — including the ones to its right), and <strong>self-correction</strong> (a wrong token committed early can be revisited and replaced later). Autoregressive models cannot do any of these natively.',
+    'viz1_1.label': 'Figure 1.1 — Side-by-side: autoregressive emission vs. diffusion denoising of the same sentence',
+    'viz1_1.arTitle': 'Autoregressive (left-to-right)',
+    'viz1_1.diffTitle': 'Diffusion (parallel denoising)',
+    'viz1_1.speed': 'Speed',
+    'viz1_1.caption': 'The autoregressive model emits one token per timestep — 12 timesteps for 12 tokens. The diffusion model commits multiple positions per step and converges in 4 steps. Both reach the same final sentence, by very different paths.',
+
+    // §2
+    'sec2.title': 'Why Diffusion Was Born In Image Space',
+    'sec2.p1': 'Diffusion models did not start in language. They were invented for images, where they are now the dominant paradigm. The core idea: take a real image, gradually add Gaussian noise until it is pure static, then train a neural network to <em>reverse</em> the noising one step at a time.',
+    'sec2.p2': 'This works beautifully for images because images live in a continuous space — every pixel is a real number, and "image + a little noise" is still a meaningful image. Now ask: <em>what is "a token + a little Gaussian noise"?</em>',
+    'sec2.mathTitle': 'The math, in one line',
+    'sec2.mathP': 'The forward Gaussian step is',
+    'sec2.mathP2': 'and the closed-form jump to any timestep is',
+    'sec2.mathP3': 'with ᾱ_t = ∏(1−β_s). Training reduces to predicting the noise ε from x_t — the famous L_simple = ‖ε − ε_θ(x_t, t)‖².',
+    'viz2_1.label': 'Figure 2.1 — Drag the slider: forward Gaussian corruption, then reverse denoising',
+    'viz2_1.clean': 'x₀ (clean)',
+    'viz2_1.noisy': 'x_T (pure noise)',
+    'viz2_1.toggle': 'Show reverse',
+    'viz2_1.caption': 'The forward process is a fixed Gaussian Markov chain: each step adds a little Gaussian noise. The reverse process is what the network learns. Notice that pixel values can be moved infinitesimally — adding 0.01 to a pixel still gives a valid pixel.',
+
+    // §3
+    'sec3.title': 'Why Continuous Diffusion Fails On Text',
+    'sec3.p1': 'Tokens are discrete. A token is an integer ID in a vocabulary of, say, 128,000 entries. There is no meaningful "Gaussian neighborhood" around the integer 42 — the token whose ID is 42 might be the word "dog," and the token whose ID is 43 might be the suffix "##ing," and the token whose ID is 41 might be a Chinese character. Adding 0.5 to a token ID gives you nothing.',
+    'sec3.p2': 'Two responses emerged. The first was <strong>embedding-space diffusion</strong> — embed each token into ℝ<sup>d</sup>, run Gaussian diffusion on the embeddings, round back to tokens at the end. It works, technically, but the rounding step is lossy and most of the model\'s capacity ends up learning the rounding boundary rather than language. By 2024, this approach was a historical branch.',
+    'sec3.p3': 'The second response is what actually won: <strong>discrete diffusion</strong> — replace the Gaussian forward kernel with a categorical Markov chain that operates directly in vocabulary space. The rest of this page is about how that one idea unfolded into a serious competitor to autoregressive language modeling.',
+    'viz3_1.label': 'Figure 3.1 — Hover the pixel grid vs. the token grid. Pixels admit smooth interpolation; tokens don\'t.',
+    'viz3_1.pixelTitle': 'Pixel space — continuous',
+    'viz3_1.tokenTitle': 'Token space — discrete',
+    'viz3_1.pixelMeta': 'hover to move the pixel value',
+    'viz3_1.tokenMeta': 'hover a token — neighbors are unrelated',
+    'viz3_1.caption': 'Pixels live on a continuum: the value 0.42 and 0.43 are nearly indistinguishable. Tokens live on a vocabulary: token #42 ("dog") and token #43 ("##ing") have no relationship at all. The Gaussian forward kernel that powers image diffusion is meaningless in vocab space.',
+
+    // §4
+    'sec4.title': 'Discrete Diffusion: A Markov Chain Over Tokens',
+    'sec4.p1': 'In a discrete diffusion model (the family called <strong>D3PM</strong>, introduced by Austin et al. in 2021), the forward "noising" step is governed by a transition matrix Q_t of shape K × K, where K is the vocabulary size. Q_t[i, j] is the probability of token i transitioning to token j at step t. Apply Q_t repeatedly and you get gradually corrupted token sequences — no Gaussians, no embeddings, just stochastic token replacement.',
+    'sec4.p2': 'Three concrete choices of Q_t matter for language:',
+    'sec4.uniform': 'Uniform.',
+    'sec4.uniformP': 'Each step, each token has a small chance of being replaced by a uniformly random token from the vocabulary. Smooth, but introduces noise that has no semantic relationship to the original.',
+    'sec4.absorbing': 'Absorbing-state (MASK).',
+    'sec4.absorbingP': 'Add a special <code>[MASK]</code> symbol to the vocabulary. Each step, each unmasked token is left alone with some probability, or replaced by <code>[MASK]</code>. Once masked, always masked. This is exactly the corruption process used by BERT — and it is the variant that powers every serious diffusion LLM today.',
+    'sec4.gaussian': 'Gaussian-over-tokens.',
+    'sec4.gaussianP': 'Concentrate Q_t near the identity using a token-ordering metric. Useful for ordinal data (like quantized image patches), but irrelevant for language since tokens have no natural ordering.',
+    'sec4.p3': 'From here on, when we say "diffusion language model" we mean <strong>masked (absorbing-state) discrete diffusion</strong>. This is the family that includes MD4, MDLM, SEDD, LLaDA, Gemini Diffusion, and Mercury.',
+    'viz4_1.label': 'Figure 4.1 — Pick a corruption variant and a corruption rate. Watch the same sentence corrupt three different ways.',
+    'viz4_1.absorbing': 'Absorbing (MASK)',
+    'viz4_1.uniform': 'Uniform',
+    'viz4_1.gaussian': 'Gaussian-over-tokens',
+    'viz4_1.rate': 'corruption rate t = ',
+    'viz4_1.caption': 'Absorbing-state corruption replaces tokens with <code>[MASK]</code> — the model knows which positions are corrupted. Uniform corruption replaces tokens with random other tokens — the model doesn\'t know which are corrupted, and must figure it out. Almost all modern diffusion LLMs use absorbing-state because of this information advantage.',
+
+    // §5
+    'sec5.title': 'The Simplification That Made It All Click',
+    'sec5.p1': 'For a few years (2021–2023), discrete diffusion was a niche topic — interesting math, but the models trained sluggishly and underperformed BERT. In 2024 two papers (<strong>MD4</strong> from Google DeepMind, and <strong>MDLM</strong> from a separate group) showed that the entire training objective for masked diffusion collapses to something stunningly simple:',
+    'sec5.formulaTitle': 'The training loss, simplified',
+    'sec5.formulaP': '— summed over masked positions only, where t is the mask rate and w(t) is a fixed weighting derived from the noise schedule. For the standard "linear" schedule (mask each token with probability t), w(t) = 1/t.',
+    'sec5.p2': 'Read that twice. This is just <strong>BERT\'s masked language modeling loss</strong>, but with the mask rate sampled uniformly from [0, 1] instead of fixed at 15%, and with a 1/t weighting. The entire mathematical edifice of "diffusion" — Markov chains, ELBOs, score functions, transition matrices — collapses, in the masked variant, to "weighted MLM with a continuous schedule."',
+    'sec5.p3': 'This collapse is the moment diffusion LLMs became viable. Training is now operationally indistinguishable from BERT\'s MLM — every existing MLM trainer, every distributed-training trick, every optimizer ablation, transfers directly. The "diffusion" content lives entirely in (a) how you choose the schedule, (b) how you weight the loss, and (c) how you sample from the trained model. The model itself is just a Transformer trained on a generalized masked-LM objective.',
+    'sec5.p4': 'LLaDA\'s training loss, published by Renmin University + Ant Group in February 2025, is exactly this — Equation 3 of the LLaDA paper is the linear-schedule special case of MD4\'s general formula. The simplification turned out to be the same one, found independently.',
+    'viz5_1.label': 'Figure 5.1 — Drag t. Watch the mask rate change, and see how the 1/t loss weight emphasizes light masking.',
+    'viz5_1.weightLabel': 'weight w(t) = 1/t = ',
+    'viz5_1.caption': 'The loss is computed only on the masked positions (highlighted). At small t (light corruption), w(t) is large and each per-token mistake costs more — the model is forced to be very accurate when context is plentiful. At large t (heavy corruption), w(t) is small and the model is given more slack.',
+
+    // Part 2
+    'part2.title': 'Architecture',
+    'part2.tag': 'What changes in the Transformer when you train it as a diffusion model.',
+
+    // §6
+    'sec6.title': 'The One Change That Changes Everything: Bidirectional Attention',
+    'sec6.p1': 'An autoregressive Transformer (GPT, Llama) uses a <em>causal</em> attention mask: token at position i can attend only to positions 1 through i. This is the structural enforcement of left-to-right generation. A diffusion Transformer (LLaDA, Gemini Diffusion, Mercury) removes that mask. Token at position i can attend to <em>every</em> position — including positions to its right.',
+    'sec6.p2': 'Drag the block-size slider above. At block size 1, the mask is fully causal — the model is operationally identical to AR. At block size = sequence length, the mask is fully bidirectional — full MDLM. In between, you get production block diffusion. <strong>This single slider is the AR-to-diffusion continuum.</strong> Modern systems live around block size 32.',
+    'viz6_1.label': 'Figure 6.1 — Click each mask. Black = attention allowed, gray = blocked. The diagonal is always allowed (self).',
+    'viz6_1.causal': 'Causal (AR / Llama)',
+    'viz6_1.bidir': 'Bidirectional (full MDLM)',
+    'viz6_1.block': 'Block diffusion (production)',
+    'viz6_1.causalDesc': 'Position i sees 1…i. KV cache is reusable across emit steps.',
+    'viz6_1.bidirDesc': 'Every position sees every other. KV cache is destroyed.',
+    'viz6_1.blockDesc': 'Bidirectional within a block, causal between blocks. KV cache for committed blocks.',
+    'viz6_1.blockSize': 'block size = ',
+    'viz6_1.caption': 'This is the central architectural trade-off of diffusion LLMs. Full bidirectional attention is what lets every token see global context — but it destroys the KV cache that makes autoregressive generation fast. Block diffusion is the engineering compromise: bidirectional within a block (so a block decodes jointly), causal between blocks (so committed blocks become a cacheable prefix).',
+
+    // §7
+    'sec7.title': 'An Anatomy of LLaDA-8B',
+    'sec7.p1': 'To make this concrete: LLaDA-8B is a Llama-3-class Transformer trained as a diffusion model. Here\'s what changes and what stays.',
+    'viz7_1.label': 'Figure 7.1 — Hover each component. Green = same as Llama-3, orange = changed for diffusion.',
+    'viz7_1.caption': 'The architecture is mostly Llama-3. Three things change: attention mask (causal → bidirectional), loss (next-token CE → weighted masked CE on masked positions), and GQA (LLaDA drops grouped-query attention, returning to 32 independent query heads). The time-step embedding for the mask rate <em>t</em> is injected via AdaLN-style FFN scaling, similar to image diffusion conditioning.',
+
+    // Part 3
+    'part3.title': 'Training',
+    'part3.tag': 'The forward process, the noise schedule, and how to convert an AR checkpoint to a diffusion model.',
+
+    // §8
+    'sec8.title': 'A Training Step, In Slow Motion',
+    'sec8.p1': 'Here is exactly what happens for one batch element during training:',
+    'sec8.step1': '<strong>Sample t</strong> ~ Uniform(0, 1). This is the mask rate for this example.',
+    'sec8.step2': '<strong>Corrupt:</strong> for each position i, independently set x_t[i] = <code>[MASK]</code> with probability t, else x_t[i] = x_0[i].',
+    'sec8.step3': '<strong>Forward pass:</strong> run the bidirectional Transformer on x_t, get logits at every position (yes, including unmasked ones — they\'re ignored).',
+    'sec8.step4': '<strong>Cross-entropy on masked positions only,</strong> weighted by 1/t.',
+    'sec8.step5': '<strong>Backprop, optimizer step, next batch.</strong>',
+    'viz8_1.label': 'Figure 8.1 — Step through one training example. Sample t, corrupt, predict, compute loss.',
+    'viz8_1.next': 'Next step →',
+    'viz8_1.newt': 'New sentence + t',
+    'viz8_1.caption': 'Notice that every position gets a prediction, but only the masked positions contribute to the loss. This is just BERT MLM with a randomized mask rate.',
+
+    // §9
+    'sec9.title': 'The Noise Schedule: How Fast The Mask Climbs',
+    'sec9.p1': 'The noise schedule α(t) maps a continuous time t ∈ [0, 1] to the fraction of tokens unmasked. At t = 0, α = 1 (no masking). At t = 1, α = 0 (everything masked). The shape of the schedule between those endpoints determines what mask rates the loss emphasizes — and, by symmetry, the step distribution at inference.',
+    'viz9_1.label': 'Figure 9.1 — Three common schedules, plus the loss weighting they induce',
+    'viz9_1.linear': 'Linear',
+    'viz9_1.cosine': 'Cosine',
+    'viz9_1.poly2': 'Polynomial (k=2)',
+    'viz9_1.poly3': 'Polynomial (k=3)',
+    'viz9_1.caption': 'Linear is the LLaDA default (α(t) = 1−t, w(t) = 1/t). Cosine smooths the endpoints. Polynomial-k shifts the weight toward heavier or lighter corruption. The choice changes <em>what the model spends its capacity learning</em>: linear over-weights the easy cases (few masks), polynomial-2 distributes more evenly.',
+
+    // §10
+    'sec10.title': 'AR → Diffusion: The WSD Curriculum',
+    'sec10.p1': 'Training a 100-billion-parameter language model from scratch is an order-of-magnitude commitment of GPU-hours. Nobody wants to throw away an existing pretrained autoregressive checkpoint and start over for the diffusion variant. <strong>AR2Diff</strong> (DeepMind, 2024) and <strong>WSD</strong> (Ant Group, 2025) both solve this: take an AR checkpoint, gradually morph it into a diffusion model.',
+    'sec10.p2': 'LLaDA2.0\'s Warmup-Stable-Decay curriculum is the most ambitious instance. It parameterizes the model by a <em>block size</em> L_B that controls how much bidirectional attention is on. At L_B = 1, the model is pure AR. At L_B = sequence length, it is pure full-sequence diffusion. The curriculum walks the model up the continuum, lets it stabilize in pure-diffusion mode, then walks it back down to a small operational block size for inference.',
+    'sec10.gaussianTitle': 'The Gaussian-noise hack',
+    'sec10.gaussianP': 'During AR pretraining, the embedding for the <code>[MASK]</code> token never receives gradient (because <code>[MASK]</code> is never seen), so its weight decays to zero. When you switch to diffusion training, every masked position has a near-zero embedding — and at high mask rates the model\'s predictions collapse into garbage. The LLaDA2.0 paper documents a precise fix: <em>inject independent Gaussian noise into the embedding-layer output for masked tokens during the first iterations</em>. This keeps the L2 norm of the masked-token embedding meaningful without re-initializing weights (which would cause catastrophic forgetting). Small, ugly, essential.',
+    'viz10_1.label': 'Figure 10.1 — Play the LLaDA2.0 WSD curriculum. Block size walks 1 → 4096 → 32.',
+    'viz10_1.lbLabel': 'current L_B = ',
+    'viz10_1.phase': 'phase: ',
+    'viz10_1.caption': 'The warmup phase (L_B: 1 → 4 → 32 → 64 → 4096) smoothly anneals the AR model into full-sequence diffusion mode while preserving the pretrained knowledge. The stable phase (L_B = 4096) trains pure MDLM on the full sequence. The decay phase (L_B: 4096 → 32) compresses back down to a production block size that supports KV-cache reuse at inference.',
+
+    // Part 4
+    'part4.title': 'Inference',
+    'part4.tag': 'The denoising loop, block diffusion, parallel decoding, and self-correction.',
+
+    // §11
+    'sec11.title': 'The Basic Denoising Loop',
+    'sec11.p1': 'At inference time, the model starts with a fully masked sequence — every position is <code>[MASK]</code> — and runs N denoising steps. Each step is one forward pass through the Transformer, which emits a probability distribution over the vocabulary at every position. The sampler then decides <em>which</em> masked positions to commit this step, samples a token at each of those, and leaves the rest masked for the next step.',
+    'viz11_1.label': 'Figure 11.1 — Step through the denoising loop. At each step you see the prediction distribution and which positions commit.',
+    'viz11_1.step': 'Next step →',
+    'viz11_1.steps': 'total steps N = ',
+    'viz11_1.caption': 'N is the inference-time step budget. With N = sequence length, the model commits one token per step — same compute as AR. With N small, many tokens commit per step in parallel. The conditional-independence assumption ("all masked positions are independent given the current context") gets stretched as N shrinks, which is the tradeoff.',
+
+    // §12
+    'sec12.title': 'Remasking Strategies: Who Commits This Step?',
+    'sec12.p1': 'The sampler\'s central decision is <em>which positions to commit</em> at each step. The four dominant strategies, in increasing order of sophistication:',
+    'viz12_1.label': 'Figure 12.1 — Same model, same prompt, four remasking strategies, side-by-side',
+    'viz12_1.runall': '▶ Run all four',
+    'viz12_1.caption': 'Random remasking picks positions uniformly — matches the training objective, but quality is poor at small N. Low-confidence remasking ranks positions by the model\'s top-1 probability and commits the most confident — empirical workhorse, dominates random remasking by ~10 points on GSM8K. Confidence-threshold variants commit any position above τ — the basis of Fast-dLLM and CAP. Margin-based variants commit on (top-1 − top-2), more robust under miscalibration.',
+
+    // §13
+    'sec13.title': 'Block Diffusion: Killing the KV-Cache Problem',
+    'sec13.p1': 'Recall from §6: full bidirectional attention destroys the KV cache. Every denoising step re-attends from scratch across the whole sequence. With sequence length 4096 and 32 steps, that\'s 32 × O(4096²) attention computations per generation. This is what makes vanilla MDLM uncompetitive at production scale.',
+    'sec13.p2': 'Block diffusion fixes it. Partition the output into blocks of size B (typically 32). Within a block, attention is bidirectional — the block decodes jointly. Between blocks, attention is causal — block k attends only to blocks 1…k. Once block k is fully decoded, its K/V is frozen and cached. The decoder marches left-to-right at the block level while doing parallel bidirectional refinement at the token level.',
+    'viz13_1.label': 'Figure 13.1 — Block-by-block decoding. Watch each block resolve, then become a cacheable prefix.',
+    'viz13_1.blocksize': 'block size B = ',
+    'viz13_1.caption': 'This is the structural backbone of Gemini Diffusion, LLaDA2.0/2.1, Mercury, and Seed Diffusion. Block size 32 has emerged as a near-universal sweet spot. LMSYS observes that block diffusion "bears a high degree of similarity to chunked-prefill" — the serving primitives are the same as existing AR engines, which is why SGLang could ship Day-0 support.',
+
+    // §14
+    'sec14.title': 'Confidence-Aware Parallel: The Speed Lever',
+    'sec14.p1': 'Block diffusion alone costs T_block forward passes per block. The decisive speedup comes from <em>committing many positions per pass</em>. The dominant policy is <strong>Confidence-Aware Parallel (CAP)</strong>: in one forward pass, commit every masked position in the active block whose top-1 probability exceeds threshold τ. Positions below τ stay masked and get re-scored next step.',
+    'viz14_1.label': 'Figure 14.1 — Drag τ. Watch how many tokens commit per pass, and how quality degrades when τ drops too low.',
+    'viz14_1.tau': 'τ = ',
+    'viz14_1.gen': '▶ Generate',
+    'viz14_1.caption': 'From the LLaDA2.0 ablation: τ = 0.95 produces score 70.15 at 2.55 tokens-per-forward-pass; τ = 0.85 raises throughput to 3.31 TPF but drops the score to 67.90 — an unacceptable quality cliff per the authors\' own framing. CAP works only because LLaDA2.0 trains an auxiliary <em>confidence loss</em> that selectively sharpens predictions <strong>only on correctly predicted tokens</strong>, so the model\'s confidence becomes a trustworthy commit signal.',
+    'sec14.calloutTitle': 'The CAP confidence loss',
+    'sec14.calloutP': 'L(θ) = L_SFT(θ) + λ · L_conf(θ), where L_conf is the entropy of the predicted distribution, computed <em>only on tokens that were correctly predicted</em>. The "correctly predicted" qualifier is critical — minimizing entropy unconditionally would push the model toward confident wrong answers. Minimizing it only on the correct subset selectively sharpens calibration where it\'s safe.',
+
+    // §15
+    'sec15.title': 'Self-Correction: T2T Editing and Multi-Block Editing',
+    'sec15.p1': 'CAP has a structural weakness: a token committed early on weak evidence is final, and the loop has no mechanism to revisit it. LLaDA2.1\'s <strong>T2T (Token-to-Token) editing</strong> fixes this. At each step, the sampler maintains two sets:',
+    'sec15.unmask': 'positions that are currently <code>[MASK]</code> and whose top-1 candidate exceeds threshold τ_mask (the standard unmasking set)',
+    'sec15.edit': 'positions that are currently <em>not</em> <code>[MASK]</code>, but whose top-1 candidate differs from the committed token <em>and</em> exceeds threshold τ_edit (the edit set)',
+    'sec15.p2': 'Positions in Δ_t get overwritten — a committed token is replaced by the new top-1 candidate. This is how a diffusion model can fix its own early-step mistakes mid-generation.',
+    'sec15.p3': '<strong>Multi-Block Editing (MBE)</strong> extends this across block boundaries: after block k+1 is decoded, the sampler revisits positions in blocks 1…k whose newly-available right-context changes their top-1 prediction. Architecturally this means breaking the K/V cache for any block where edits trigger and re-running attention — expensive, but only triggered when needed. LLaDA2.1 reports MBE consistently improves benchmarks on reasoning and coding tasks where late evidence invalidates early commitments.',
+    'viz15_1.label': 'Figure 15.1 — Watch a wrong token get committed early, then replaced by T2T after more context arrives',
+    'viz15_1.taumask': 'τ_mask = ',
+    'viz15_1.tauedit': 'τ_edit = ',
+    'viz15_1.caption': 'LLaDA2.1 ships two operating points. Speedy mode uses τ_mask ≈ 0.5, τ_edit ≈ 0.0 — commits aggressively, lets T2T clean up. Quality mode uses τ_mask ≈ 0.7, τ_edit ≈ 0.5 — conservative commitment, minimal editing. Speedy mode is 2.1× faster than LLaDA2.0 and quality-equivalent, because T2T repairs the over-commitments.',
+
+    // §16
+    'sec16.title': 'Speed vs. Quality: The Real Tradeoff Curve',
+    'sec16.p1': 'Every diffusion-LLM acceleration trick is a point on a single curve: throughput vs. benchmark score. The marketing-grade "10× faster than autoregressive" numbers come from comparing favorable conditions on one side with unfavorable conditions on the other (small GPU, no continuous batching, etc.). The honest controlled-comparison number is ~2×.',
+    'viz16_1.label': 'Figure 16.1 — Throughput vs. quality, controlled comparison on 8×H20',
+    'viz16_1.caption': 'Data from the LMSYS Day-0 SGLang post (Dec 2025) and the LLaDA2.0 paper. Same hardware, same TP=8, same serving stack. The honest number for "diffusion vs. AR speedup at parity quality" is ~1.9–2.1× on small batch. Marketing-grade 10× numbers reflect unfavorable AR baselines.',
+
+    // Part 5
+    'part5.title': 'The Stacks',
+    'part5.tag': 'Google DeepMind\'s four-layer stack, and Ant Group\'s open-source LLaDA lineage.',
+
+    // §17
+    'sec17.title': 'Google DeepMind: MD4 → AR2Diff → Gemini Diffusion',
+    'sec17.p1': 'DeepMind\'s diffusion-LLM work is a four-layer stack, assembled over roughly 24 months. The math layer (MD4) gave the simplification we unpacked in §5. The schedule generalization (GenMD4) made the noise schedule learnable per-token. The transfer recipe (AR2Diff) let an existing AR checkpoint become a diffusion model with a small additional pretraining budget. The serving system (Gemini Diffusion) is the productization — a block-diffusion model demoed at Google I/O 2025.',
+    'viz17_1.label': 'Figure 17.1 — DeepMind\'s diffusion-LLM stack, click each layer',
+    'viz17_2.label': 'Figure 17.2 — Gemini Diffusion vs. Gemini 2.0 Flash-Lite, by benchmark category',
+    'viz17_2.caption': 'Within ~1 point of Flash-Lite on code and short math (HumanEval, MBPP, LiveCodeBench, BigCodeBench, AIME 2025). Falls 10–16 points behind on multi-hop reasoning and broad knowledge (GPQA Diamond, BIG-Bench Hard, Global MMLU Lite). This is the coordination problem: parallel commitment within a block struggles on long chains of dependent inferences. Block diffusion partially recovers AR\'s prefix-conditioning, but not entirely.',
+
+    // §18
+    'sec18.title': 'Ant Group / inclusionAI: The LLaDA Lineage',
+    'sec18.p1': 'In a 12-month sprint, Ant Group and Renmin University released five generations of open-source diffusion LLMs — culminating in LLaDA2.0-flash, the first 100B-parameter diffusion model. Every checkpoint is MIT/Apache licensed; every paper ships with code. This is the most aggressive open-source push in the diffusion-LLM space.',
+    'viz18_1.label': 'Figure 18.1 — Five generations of LLaDA. Click each.',
+    'viz18_2.label': 'Figure 18.2 — LLaDA2.0-flash MoE routing: 256 routed experts + 1 shared, top-8 per token',
+    'viz18_2.caption': '100B total parameters; only ~6.1B active per token thanks to the 1/32 activation ratio. The shared expert is always active; the router picks 8 of 256 routed experts per token, weighted by sigmoid routing scores (aux-loss-free).',
+
+    // Part 6
+    'part6.title': 'Playground',
+    'part6.tag': 'Try it yourself. Run a denoising loop. See the reverse curse. Tune the speed/quality knob.',
+
+    // §19
+    'sec19.title': 'Build Your Own Denoising Loop',
+    'sec19.p1': 'Pick a sentence. Pick a block size, a number of steps, a remasking strategy. Watch the model "generate" by uncorrupting a tape of masks. (This is a simulated diffusion process — the predictions are pre-baked from a real LLaDA-style trace, not a live model — but the dynamics are faithful.)',
+    'viz19_1.label': 'Figure 19.1 — Full diffusion-decoding playground',
+
+    // §20
+    'sec20.title': 'The Reverse Curse Demo',
+    'sec20.p1': 'Autoregressive models trained on "A is B" struggle to answer "B is A" at inference. This is the <em>reverse curse</em>, and it is a direct consequence of left-to-right training: the model never sees "A is B" as evidence for "B is A." Bidirectional MLE training (i.e., diffusion training) sees both directions equally. The LLaDA paper documents this concretely on Chinese poem completion: forward 51.8% / reverse 45.6% for LLaDA, vs. forward 82.7% / reverse 34.3% for GPT-4o. GPT-4o is dramatically better forward and dramatically worse backward.',
+    'viz20_1.label': 'Figure 20.1 — Reverse curse, side-by-side',
+
+    // Sources
+    'sources.title': 'Sources and further reading',
+    'sources.intro': 'Everything in this page is grounded in primary sources. Click any link to go to the original.',
+    'sources.foundations': 'Foundations',
+    'sources.deepmind': 'Google DeepMind',
+    'sources.ant': 'Ant Group / inclusionAI',
+    'sources.inference': 'Inference',
+
+    'footer.built': 'Built as a portfolio explainer · 2026',
+    'footer.top': '↑ Back to top',
+  },
+
+  zh: {
+    'page.title': '扩散大语言模型 — 逐层解析其工作原理',
+    'page.desc': '面向文本与代码的扩散语言模型互动式图解教程。',
+    'nav.logo': '扩散语言模型',
+    'nav.part1': '基础',
+    'nav.part2': '架构',
+    'nav.part3': '训练',
+    'nav.part4': '推理',
+    'nav.part5': '技术栈',
+    'nav.part6': '实验场',
+    'toc.title': '目录',
+
+    'hero.eyebrow': '互动式技术解析',
+    'hero.titleA': '扩散',
+    'hero.titleB': '大语言模型',
+    'hero.subtitle': '一个模型如何通过对 <code>[MASK]</code> 序列进行<em>去噪</em>来生成文本与代码 —— 以及这对下一代 AI 的深远意义。',
+    'hero.demoLabel': '一句话的 4 步扩散解码 —— 观察 mask 如何逐步消解',
+    'hero.play': '▶ 播放',
+    'hero.reset': '↺ 重置',
+    'hero.metaSections': '章节数',
+    'hero.metaViz': '互动可视化',
+    'hero.metaTime': '阅读时长',
+    'hero.note': '本页面假设你了解 Transformer，并大致理解自回归（从左到右）语言模型（如 GPT、Llama）的工作方式。其余内容均从第一性原理推导。点击顶部 <span class="kbd">EN / 中</span> 切换语言。',
+
+    'viz.play': '▶ 播放',
+    'viz.reset': '↺ 重置',
+
+    'part1.title': '基础',
+    'part1.tag': '从图像扩散到离散 token —— 中间的鸿沟比想象中更深。',
+
+    'sec1.title': '生成的两种方式',
+    'sec1.p1': '每一种生成模型都在回答同一个问题：<em>给定我目前看到的所有内容，下一个是什么？</em>自回归语言模型按序回答 —— 一次一个 token，从左到右。每个新 token 都以之前所有 token 的精确文本为条件。这就是 GPT、Llama、Claude、Gemini（大部分情况下）所做的事。',
+    'sec1.p2': '扩散模型用截然不同的方式回答相同的问题。它们不是一次一个 token 地构建输出，而是从一个完全损坏的序列开始 —— 一条全是 <code>[MASK]</code> 的序列 —— 然后在很少的几步内对其进行精炼，每一步并行地决定所有位置。到最后一步，每个 mask 都被替换为真实的 token。模型不是通过书写、而是通过<em>去除噪声</em>来生成整条序列。',
+    'sec1.p3': '为什么要选择第二种方式？三个理由，本页面将逐步展开：<strong>并行性</strong>（每步提交多个 token → 可能更快）、<strong>双向性</strong>（生成时每个 token 看到所有其他 token —— 包括右侧的）、<strong>自我修正</strong>（早期错误提交的 token 可在后续被重新访问并替换）。自回归模型在原生意义上做不到任何一项。',
+    'viz1_1.label': '图 1.1 —— 同一句话的自回归发射 vs. 扩散去噪，并列对比',
+    'viz1_1.arTitle': '自回归（从左到右）',
+    'viz1_1.diffTitle': '扩散（并行去噪）',
+    'viz1_1.speed': '速度',
+    'viz1_1.caption': '自回归模型每个时间步发射一个 token —— 12 个 token 需要 12 步。扩散模型每步提交多个位置，仅 4 步即收敛。两者到达同一终点，路径截然不同。',
+
+    'sec2.title': '为什么扩散诞生于图像空间',
+    'sec2.p1': '扩散模型并非起源于语言。它们是为图像而发明的，如今已是图像生成的主导范式。核心思想：对真实图像逐步加入高斯噪声直至成为纯噪点，然后训练神经网络逐步<em>逆转</em>这个过程。',
+    'sec2.p2': '这对图像极为有效，因为图像生活在连续空间 —— 每个像素都是一个实数，"图像 + 少量噪声" 依然是一张有意义的图像。现在的问题是：<em>"token + 少量高斯噪声"是什么？</em>',
+    'sec2.mathTitle': '一行数学',
+    'sec2.mathP': '前向高斯步骤为',
+    'sec2.mathP2': '到任意时间步的闭式跳跃为',
+    'sec2.mathP3': '其中 ᾱ_t = ∏(1−β_s)。训练简化为从 x_t 预测噪声 ε —— 著名的 L_simple = ‖ε − ε_θ(x_t, t)‖²。',
+    'viz2_1.label': '图 2.1 —— 拖动滑块：前向高斯破坏，再反向去噪',
+    'viz2_1.clean': 'x₀（干净）',
+    'viz2_1.noisy': 'x_T（纯噪声）',
+    'viz2_1.toggle': '显示反向',
+    'viz2_1.caption': '前向过程是一条固定的高斯 Markov 链：每一步加入少量高斯噪声。反向过程是网络学习的对象。注意像素值可以被无穷小地移动 —— 给某像素加 0.01 仍然是一个合法像素。',
+
+    'sec3.title': '为什么连续扩散无法处理文本',
+    'sec3.p1': 'token 是离散的。一个 token 就是词表中（比方说 128,000 个条目）的一个整数 ID。整数 42 周围没有任何有意义的"高斯邻域" —— ID 为 42 的 token 可能是单词 "dog"，ID 为 43 的 token 可能是后缀 "##ing"，ID 为 41 的 token 可能是一个中文字符。给 token ID 加 0.5 没有任何意义。',
+    'sec3.p2': '研究界给出了两种回应。第一种是<strong>嵌入空间扩散</strong> —— 将每个 token 嵌入到 ℝ<sup>d</sup>，在嵌入向量上跑高斯扩散，最后再四舍五入回 token。技术上可行，但舍入步骤是有损的，模型的大部分容量最终都被用于学习舍入边界而非语言。到 2024 年，这条路线已成为历史分支。',
+    'sec3.p3': '第二种回应才是真正胜出的路线：<strong>离散扩散</strong> —— 用一个直接在词表空间上运作的类别 Markov 链替换高斯前向核。本页面接下来的全部内容，都是关于这个想法如何展开为自回归语言建模的严肃挑战者。',
+    'viz3_1.label': '图 3.1 —— 悬停像素网格 vs. token 网格。像素允许平滑插值，token 不行。',
+    'viz3_1.pixelTitle': '像素空间 —— 连续',
+    'viz3_1.tokenTitle': 'token 空间 —— 离散',
+    'viz3_1.pixelMeta': '悬停以移动像素值',
+    'viz3_1.tokenMeta': '悬停一个 token —— 邻居之间毫无关联',
+    'viz3_1.caption': '像素生活在连续体上：值 0.42 和 0.43 几乎无法区分。token 生活在词表上：token #42（"dog"）和 token #43（"##ing"）完全无关。驱动图像扩散的高斯前向核，在词表空间中毫无意义。',
+
+    'sec4.title': '离散扩散：token 上的 Markov 链',
+    'sec4.p1': '在离散扩散模型（Austin 等人 2021 年提出的 <strong>D3PM</strong> 家族）中，前向"加噪"步骤由形状为 K × K 的转移矩阵 Q_t 控制（K 是词表大小）。Q_t[i, j] 是 token i 在第 t 步转移到 token j 的概率。反复应用 Q_t 即得到逐渐损坏的 token 序列 —— 没有高斯，没有嵌入，只有随机 token 替换。',
+    'sec4.p2': 'Q_t 的三种具体选择对语言至关重要：',
+    'sec4.uniform': '均匀型。',
+    'sec4.uniformP': '每一步，每个 token 都有小概率被词表中均匀采样的随机 token 替换。平滑，但引入的噪声与原 token 没有语义关联。',
+    'sec4.absorbing': '吸收态（MASK）。',
+    'sec4.absorbingP': '在词表中增加一个特殊的 <code>[MASK]</code> 符号。每一步，每个未被掩码的 token 要么以一定概率保留，要么被替换为 <code>[MASK]</code>。一旦被掩码，永久被掩码。这正是 BERT 使用的损坏过程 —— 也是当今所有严肃扩散语言模型背后的变种。',
+    'sec4.gaussian': 'token 上的高斯型。',
+    'sec4.gaussianP': '用 token 排序度量将 Q_t 集中在单位矩阵附近。对有序数据（如量化后的图像 patch）有用，但对语言无关 —— token 之间没有天然的次序。',
+    'sec4.p3': '从这里开始，当我们说"扩散语言模型"时，指的就是<strong>masked（吸收态）离散扩散</strong>。这一家族包括 MD4、MDLM、SEDD、LLaDA、Gemini Diffusion、Mercury。',
+    'viz4_1.label': '图 4.1 —— 选择一种损坏变种和损坏率。观察同一句话三种不同的损坏方式。',
+    'viz4_1.absorbing': '吸收态（MASK）',
+    'viz4_1.uniform': '均匀',
+    'viz4_1.gaussian': 'token 高斯',
+    'viz4_1.rate': '损坏率 t = ',
+    'viz4_1.caption': '吸收态损坏将 token 替换为 <code>[MASK]</code> —— 模型知道哪些位置被损坏了。均匀损坏将 token 替换为其它随机 token —— 模型不知道哪些被损坏，必须自己找出来。几乎所有现代扩散语言模型都使用吸收态，正是因为这一信息优势。',
+
+    'sec5.title': '让一切水落石出的简化',
+    'sec5.p1': '前几年（2021–2023），离散扩散一直是个小众话题 —— 数学上有趣，但模型训练迟缓，性能不及 BERT。2024 年，两篇论文（Google DeepMind 的 <strong>MD4</strong> 与另一组的 <strong>MDLM</strong>）证明：masked 扩散的整个训练目标，可以坍缩为一个出奇简单的形式：',
+    'sec5.formulaTitle': '简化后的训练损失',
+    'sec5.formulaP': '—— 仅对 masked 位置求和，其中 t 是 mask 率，w(t) 是由噪声调度推导出的固定加权。对于标准"线性"调度（每个 token 以概率 t 被掩码），w(t) = 1/t。',
+    'sec5.p2': '请读两遍。这就是 <strong>BERT 的 masked 语言建模损失</strong>，只不过 mask 率从 [0, 1] 中均匀采样（而非固定为 15%），并带有一个 1/t 加权。整个"扩散"的数学构架 —— Markov 链、ELBO、得分函数、转移矩阵 —— 在 masked 变种下全部坍缩为"带有连续调度的加权 MLM"。',
+    'sec5.p3': '这种坍缩正是扩散语言模型变得可行的时刻。训练在操作上已与 BERT 的 MLM 不可区分 —— 每一个已有的 MLM 训练器、每一个分布式训练技巧、每一项优化器消融实验都可直接迁移。所谓"扩散"内容全部寄生于 (a) 调度选择、(b) 损失加权、(c) 训练后如何采样这三件事中。模型本身只是一个用广义 masked 语言建模目标训练的 Transformer。',
+    'sec5.p4': 'LLaDA 的训练损失（人大与蚂蚁集团 2025 年 2 月发布）恰好就是这个 —— LLaDA 论文的方程 3，正是 MD4 通用公式的线性调度特例。两个团队各自独立得到了同一个简化。',
+    'viz5_1.label': '图 5.1 —— 拖动 t。观察 mask 率变化，以及 1/t 损失加权如何强调轻度掩码。',
+    'viz5_1.weightLabel': '加权 w(t) = 1/t = ',
+    'viz5_1.caption': '损失只在 masked 位置（高亮）计算。当 t 小时（轻度损坏），w(t) 大，每个 token 上的错误代价更高 —— 在上下文丰富时模型被迫保持极高准确率。当 t 大时（重度损坏），w(t) 小，模型获得更多容错空间。',
+
+    'part2.title': '架构',
+    'part2.tag': '当 Transformer 被作为扩散模型训练时，会发生什么变化。',
+
+    'sec6.title': '改变一切的那一个改变：双向注意力',
+    'sec6.p1': '自回归 Transformer（GPT、Llama）使用<em>因果</em>注意力 mask：位置 i 的 token 只能关注位置 1 到 i。这是从左到右生成的结构性强制。扩散 Transformer（LLaDA、Gemini Diffusion、Mercury）移除这一 mask。位置 i 的 token 可以关注<em>所有</em>位置 —— 包括右侧的。',
+    'sec6.p2': '拖动上方的块大小滑块。块大小 1 时，mask 完全是因果的 —— 模型在操作上等同于 AR。块大小等于序列长度时，mask 完全双向 —— 即纯 MDLM。中间区域则是生产级的块扩散。<strong>这一个滑块本身就是 AR 到扩散的连续体。</strong>现代系统通常活在块大小 32 附近。',
+    'viz6_1.label': '图 6.1 —— 点击每个 mask。黑色 = 允许注意力，灰色 = 屏蔽。对角线始终允许（自身）。',
+    'viz6_1.causal': '因果（AR / Llama）',
+    'viz6_1.bidir': '双向（完整 MDLM）',
+    'viz6_1.block': '块扩散（生产）',
+    'viz6_1.causalDesc': '位置 i 看到 1…i。KV 缓存可在发射步之间复用。',
+    'viz6_1.bidirDesc': '所有位置看到所有位置。KV 缓存被摧毁。',
+    'viz6_1.blockDesc': '块内双向，块间因果。已提交块的 KV 缓存可复用。',
+    'viz6_1.blockSize': '块大小 = ',
+    'viz6_1.caption': '这是扩散语言模型的核心架构权衡。完全双向注意力让每个 token 看到全局上下文 —— 但摧毁了让自回归生成快起来的 KV 缓存。块扩散是工程妥协：块<em>内</em>双向（一个块联合解码）、块<em>间</em>因果（已提交的块成为可缓存的前缀）。',
+
+    'sec7.title': 'LLaDA-8B 解剖',
+    'sec7.p1': '把概念落到实处：LLaDA-8B 是一个被作为扩散模型训练的 Llama-3 级 Transformer。下面是哪些变了、哪些没变。',
+    'viz7_1.label': '图 7.1 —— 悬停每个组件。绿色 = 与 Llama-3 相同，橙色 = 为扩散而修改。',
+    'viz7_1.caption': '架构大体仍是 Llama-3。三处变化：注意力 mask（因果 → 双向）、损失（下一个 token CE → 在 masked 位置上的加权 masked CE）、GQA（LLaDA 移除了 grouped-query attention，回归 32 个独立查询头）。mask 率 <em>t</em> 的时间步嵌入通过 AdaLN 风格的 FFN 缩放注入，类似图像扩散中的条件机制。',
+
+    'part3.title': '训练',
+    'part3.tag': '前向过程、噪声调度，以及如何把一个 AR 检查点转化为扩散模型。',
+
+    'sec8.title': '一个训练步骤，慢动作演示',
+    'sec8.p1': '一个 batch 元素在训练时究竟发生了什么：',
+    'sec8.step1': '<strong>采样 t</strong> ~ Uniform(0, 1)。这是该样本的 mask 率。',
+    'sec8.step2': '<strong>损坏：</strong>对每个位置 i，独立地以概率 t 设 x_t[i] = <code>[MASK]</code>，否则 x_t[i] = x_0[i]。',
+    'sec8.step3': '<strong>前向传播：</strong>对 x_t 运行双向 Transformer，得到每个位置上的 logits（是的，包括未掩码的位置 —— 它们会被忽略）。',
+    'sec8.step4': '<strong>仅在 masked 位置计算交叉熵</strong>，并以 1/t 加权。',
+    'sec8.step5': '<strong>反向传播、优化器更新、下一 batch。</strong>',
+    'viz8_1.label': '图 8.1 —— 单个训练样本的逐步演示。采样 t，损坏，预测，计算损失。',
+    'viz8_1.next': '下一步 →',
+    'viz8_1.newt': '新句子 + t',
+    'viz8_1.caption': '注意每个位置都有预测，但只有 masked 位置贡献损失。这就是 mask 率随机化后的 BERT MLM。',
+
+    'sec9.title': '噪声调度：mask 怎样上升',
+    'sec9.p1': '噪声调度 α(t) 将连续时间 t ∈ [0, 1] 映射到未掩码 token 的比例。t = 0 时 α = 1（无掩码）；t = 1 时 α = 0（全部掩码）。两端之间的形状决定了损失在哪些 mask 率上获得最大权重 —— 由对称性，也决定了推理时的步数分布。',
+    'viz9_1.label': '图 9.1 —— 三种常见调度，以及它们诱导的损失加权',
+    'viz9_1.linear': '线性',
+    'viz9_1.cosine': '余弦',
+    'viz9_1.poly2': '多项式 (k=2)',
+    'viz9_1.poly3': '多项式 (k=3)',
+    'viz9_1.caption': '线性是 LLaDA 的默认（α(t) = 1−t，w(t) = 1/t）。余弦平滑两端。多项式-k 将权重移向更重或更轻的损坏。这一选择会改变<em>模型把容量花在学习什么上</em>：线性过度强调容易的样本（少 mask），多项式-2 分布更均匀。',
+
+    'sec10.title': 'AR → 扩散：WSD 训练课程',
+    'sec10.p1': '从零训练一个千亿参数语言模型是数量级的 GPU 时投入。没人愿意把已有的预训练自回归检查点扔掉、为扩散变种从头再来。<strong>AR2Diff</strong>（DeepMind, 2024）与 <strong>WSD</strong>（蚂蚁集团, 2025）都解决了这个问题：以 AR 检查点为起点，逐步将其变形为扩散模型。',
+    'sec10.p2': 'LLaDA2.0 的 Warmup-Stable-Decay 课程是其中最雄心勃勃的实例。它用一个<em>块大小</em> L_B 参数化模型，控制双向注意力开启的程度。L_B = 1 时，模型是纯 AR。L_B = 序列长度时，是纯全序列扩散。课程将模型沿连续体一路走上去，让它在纯扩散模式下稳定，再走下来回到推理时的小操作块大小。',
+    'sec10.gaussianTitle': '高斯噪声 hack',
+    'sec10.gaussianP': '在 AR 预训练阶段，<code>[MASK]</code> token 的嵌入从未收到梯度（因为 <code>[MASK]</code> 从未出现），其权重会衰减为零。当切换到扩散训练时，每个 masked 位置的嵌入都接近零 —— 在高 mask 率下，模型预测会坍塌为垃圾。LLaDA2.0 论文记录了一个精准修复：<em>在训练初期向 masked token 的嵌入层输出注入独立高斯噪声</em>。这让 masked token 嵌入的 L2 范数保持有意义，又不必重新初始化权重（那会导致灾难性遗忘）。小、丑陋、必要。',
+    'viz10_1.label': '图 10.1 —— 播放 LLaDA2.0 的 WSD 课程。块大小从 1 → 4096 → 32。',
+    'viz10_1.lbLabel': '当前 L_B = ',
+    'viz10_1.phase': '阶段：',
+    'viz10_1.caption': '热身阶段（L_B: 1 → 4 → 32 → 64 → 4096）将 AR 模型平滑地退火至全序列扩散模式，同时保留预训练知识。稳定阶段（L_B = 4096）在全序列上训练纯 MDLM。衰减阶段（L_B: 4096 → 32）压缩回支持 KV 缓存复用的生产块大小。',
+
+    'part4.title': '推理',
+    'part4.tag': '去噪循环、块扩散、并行解码与自我修正。',
+
+    'sec11.title': '基础的去噪循环',
+    'sec11.p1': '推理时，模型从全 masked 序列出发 —— 每个位置都是 <code>[MASK]</code> —— 跑 N 步去噪。每一步都是一次完整的 Transformer 前向传播，在每个位置上输出一个词表上的概率分布。采样器然后决定本步<em>哪些</em>masked 位置要提交，在那些位置上各采样一个 token，其余位置保持 masked 留到下一步。',
+    'viz11_1.label': '图 11.1 —— 单步执行去噪循环。每一步可见预测分布以及哪些位置提交。',
+    'viz11_1.step': '下一步 →',
+    'viz11_1.steps': '总步数 N = ',
+    'viz11_1.caption': 'N 是推理时的步数预算。N = 序列长度时，每步一个 token —— 与 AR 同等计算量。N 很小时，每步并行提交多个 token。条件独立假设（"在当前上下文下所有 masked 位置相互独立"）会随 N 减小而被拉伸，这就是权衡。',
+
+    'sec12.title': '重新掩码策略：本步谁来提交？',
+    'sec12.p1': '采样器的核心决策是<em>哪些位置提交</em>。按复杂度递增的四种主导策略：',
+    'viz12_1.label': '图 12.1 —— 同一模型、同一提示，四种重新掩码策略并列',
+    'viz12_1.runall': '▶ 一起跑四种',
+    'viz12_1.caption': '随机重新掩码 —— 均匀挑选位置 —— 匹配训练目标，但小 N 时质量差。低置信度重新掩码按模型的 top-1 概率给位置排序、提交最自信的 —— 经验型主力，在 GSM8K 上比随机重新掩码强约 10 分。基于阈值的变种在所有超过 τ 的位置提交 —— 这是 Fast-dLLM 与 CAP 的基础。基于差距的变种则按 (top-1 − top-2) 提交，在校准不佳时更稳健。',
+
+    'sec13.title': '块扩散：解决 KV 缓存问题',
+    'sec13.p1': '回顾 §6：完全双向注意力摧毁 KV 缓存。每一步去噪都要在整条序列上重新做注意力。序列长 4096、32 步意味着每次生成都要 32 × O(4096²) 次注意力计算。这正是普通 MDLM 在生产规模下没有竞争力的根因。',
+    'sec13.p2': '块扩散解决了它。把输出切分为大小为 B（通常 32）的块。块内注意力双向 —— 块联合解码。块间注意力因果 —— 块 k 只关注块 1…k。一旦块 k 完成解码，其 K/V 即被冻结并缓存。解码器在块层级从左到右行进，同时在 token 层级做并行双向精炼。',
+    'viz13_1.label': '图 13.1 —— 逐块解码。观察每个块解决，然后成为可缓存的前缀。',
+    'viz13_1.blocksize': '块大小 B = ',
+    'viz13_1.caption': '这是 Gemini Diffusion、LLaDA2.0/2.1、Mercury、Seed Diffusion 的结构性脊柱。块大小 32 已成为近乎通用的甜点。LMSYS 观察到块扩散"与 chunked-prefill 高度相似" —— 服务原语与现有 AR 引擎相同，这就是 SGLang 能 Day-0 支持的原因。',
+
+    'sec14.title': '置信度感知并行：速度杠杆',
+    'sec14.p1': '单独的块扩散每块仍要 T_block 次前向传播。决定性的加速来自<em>每次前向提交多个位置</em>。主导策略是 <strong>Confidence-Aware Parallel（CAP）</strong>：一次前向传播中，提交活跃块中所有 top-1 概率超过阈值 τ 的 masked 位置。低于 τ 的位置保持 masked，留到下一步重新评分。',
+    'viz14_1.label': '图 14.1 —— 拖动 τ。观察每步提交的 token 数量，以及 τ 过低时质量如何崩塌。',
+    'viz14_1.tau': 'τ = ',
+    'viz14_1.gen': '▶ 生成',
+    'viz14_1.caption': '出自 LLaDA2.0 的消融：τ = 0.95 时分数 70.15、每前向 2.55 token；τ = 0.85 时吞吐升至 3.31 TPF，但分数跌至 67.90 —— 按作者原文是"不可接受的质量悬崖"。CAP 之所以可行，是因为 LLaDA2.0 训练了一个辅助<em>置信度损失</em>，仅<strong>对预测正确的 token 选择性地</strong>锐化预测分布，使模型置信度成为可信的提交信号。',
+    'sec14.calloutTitle': 'CAP 置信度损失',
+    'sec14.calloutP': 'L(θ) = L_SFT(θ) + λ · L_conf(θ)，其中 L_conf 是预测分布的熵，且<em>仅对预测正确的 token</em>计算。"预测正确"这一限定至关重要 —— 无差别地最小化熵会把模型推向自信地犯错。仅对正确子集最小化熵则在安全之处选择性地锐化校准。',
+
+    'sec15.title': '自我修正：T2T 编辑与多块编辑',
+    'sec15.p1': 'CAP 有一个结构性弱点：基于弱证据早早提交的 token 是终局，循环没有重访它的机制。LLaDA2.1 的 <strong>T2T（Token-to-Token）编辑</strong>修复了这个问题。采样器每一步维护两个集合：',
+    'sec15.unmask': '当前是 <code>[MASK]</code>、且其 top-1 候选超过阈值 τ_mask 的位置（标准去掩码集）',
+    'sec15.edit': '当前<em>不是</em> <code>[MASK]</code>、但 top-1 候选与已提交 token 不同<em>且</em>超过阈值 τ_edit 的位置（编辑集）',
+    'sec15.p2': 'Δ_t 中的位置会被覆盖 —— 已提交的 token 被新的 top-1 候选替换。这就是扩散模型如何在生成过程中修复自己早期错误的机制。',
+    'sec15.p3': '<strong>多块编辑（MBE）</strong>将这一思想跨块扩展：块 k+1 解码完成后，采样器重新访问块 1…k 中那些其 top-1 预测因新得到的右侧上下文而改变的位置。架构上意味着，对触发编辑的块打破 KV 缓存并重新运行注意力 —— 代价不小，但仅在需要时触发。LLaDA2.1 报告 MBE 在那些迟到的证据会推翻早期提交的推理与编码任务上持续改善基准。',
+    'viz15_1.label': '图 15.1 —— 观察一个 token 被早早错误提交，然后在更多上下文到来后被 T2T 替换',
+    'viz15_1.taumask': 'τ_mask = ',
+    'viz15_1.tauedit': 'τ_edit = ',
+    'viz15_1.caption': 'LLaDA2.1 提供两种工作点。Speedy 模式使用 τ_mask ≈ 0.5、τ_edit ≈ 0.0 —— 激进提交，让 T2T 清理。Quality 模式使用 τ_mask ≈ 0.7、τ_edit ≈ 0.5 —— 保守提交、最少编辑。Speedy 模式比 LLaDA2.0 快 2.1×，质量等价 —— 因为 T2T 修复了过度提交。',
+
+    'sec16.title': '速度 vs. 质量：真实的权衡曲线',
+    'sec16.p1': '所有扩散语言模型的加速技巧，都是同一条曲线上的一点：吞吐 vs. 基准分数。市场宣传级"比自回归快 10×"的数字来自对一方使用有利条件、对另一方使用不利条件的对比（小 GPU、无 continuous batching 等）。诚实的受控对比数字是约 2×。',
+    'viz16_1.label': '图 16.1 —— 8×H20 上的吞吐与质量受控对比',
+    'viz16_1.caption': '数据来自 LMSYS Day-0 SGLang 帖（2025 年 12 月）与 LLaDA2.0 论文。同硬件、同 TP=8、同服务栈。"扩散在等质量下相对 AR 的加速比"诚实数字是约 1.9–2.1×（小 batch）。10× 的市场数字反映的是对 AR 不利的基线。',
+
+    'part5.title': '技术栈',
+    'part5.tag': 'Google DeepMind 的四层栈，以及蚂蚁集团的开源 LLaDA 谱系。',
+
+    'sec17.title': 'Google DeepMind：MD4 → AR2Diff → Gemini Diffusion',
+    'sec17.p1': 'DeepMind 的扩散语言模型工作是一个四层栈，约 24 个月内拼装完成。数学层（MD4）给了 §5 解构过的简化。调度泛化（GenMD4）让噪声调度对每个 token 可学。迁移配方（AR2Diff）让已有 AR 检查点以少量额外预训练预算转为扩散模型。服务系统（Gemini Diffusion）是产品化 —— 在 Google I/O 2025 上演示的块扩散模型。',
+    'viz17_1.label': '图 17.1 —— DeepMind 的扩散语言模型栈，点击每一层',
+    'viz17_2.label': '图 17.2 —— Gemini Diffusion vs. Gemini 2.0 Flash-Lite，按基准类别对比',
+    'viz17_2.caption': '代码与短数学（HumanEval、MBPP、LiveCodeBench、BigCodeBench、AIME 2025）上与 Flash-Lite 差距约 1 分。多跳推理与广泛知识（GPQA Diamond、BIG-Bench Hard、Global MMLU Lite）上落后 10–16 分。这是协调问题：块内的并行提交在长链相互依赖的推理上挣扎。块扩散部分恢复了 AR 的前缀条件化，但不完整。',
+
+    'sec18.title': '蚂蚁集团 / inclusionAI：LLaDA 谱系',
+    'sec18.p1': '在 12 个月的冲刺中，蚂蚁集团与人大发布了五代开源扩散语言模型 —— 在 LLaDA2.0-flash 处登顶：第一个 100B 参数扩散模型。每一个检查点都是 MIT/Apache 许可；每一篇论文都附带代码。这是扩散语言模型领域最激进的开源推进。',
+    'viz18_1.label': '图 18.1 —— LLaDA 五代，点击每一代',
+    'viz18_2.label': '图 18.2 —— LLaDA2.0-flash MoE 路由：256 路由专家 + 1 共享专家，每 token top-8',
+    'viz18_2.caption': '总参数 100B；得益于 1/32 的激活率，每 token 实际激活仅约 6.1B。共享专家始终激活；路由器为每个 token 从 256 个路由专家中选 8 个，权重由 sigmoid 路由分数加权（aux-loss-free）。',
+
+    'part6.title': '实验场',
+    'part6.tag': '亲手试试。跑一次去噪循环。看看反转诅咒。调节速度/质量旋钮。',
+
+    'sec19.title': '构建你自己的去噪循环',
+    'sec19.p1': '挑一句话。挑一个块大小、一个步数、一种重新掩码策略。观察模型如何通过对一条 mask 序列"去噪"来"生成"。（这是一次模拟扩散过程 —— 预测来自一个真实 LLaDA 风格的预录轨迹，并非实时模型 —— 但动力学是忠实的。）',
+    'viz19_1.label': '图 19.1 —— 完整扩散解码实验场',
+
+    'sec20.title': '反转诅咒演示',
+    'sec20.p1': '在 "A 是 B" 上训练的自回归模型，在推理时回答 "B 是 A" 时举步维艰。这就是<em>反转诅咒</em>，是从左到右训练的直接后果：模型从未把 "A 是 B" 视作 "B 是 A" 的证据。双向 MLE 训练（即扩散训练）对两个方向一视同仁。LLaDA 论文在中文古诗对句任务上有具体记录：LLaDA 正向 51.8% / 反向 45.6%，GPT-4o 正向 82.7% / 反向 34.3%。GPT-4o 正向显著更好、反向显著更差。',
+    'viz20_1.label': '图 20.1 —— 反转诅咒并列演示',
+
+    'sources.title': '资料来源与延伸阅读',
+    'sources.intro': '本页所有内容均出自一手来源。点击任意链接前往原文。',
+    'sources.foundations': '基础',
+    'sources.deepmind': 'Google DeepMind',
+    'sources.ant': '蚂蚁集团 / inclusionAI',
+    'sources.inference': '推理',
+
+    'footer.built': '作为作品集解析页构建 · 2026',
+    'footer.top': '↑ 返回顶部',
+  }
+};

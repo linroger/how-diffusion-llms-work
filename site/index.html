@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="page.title">Diffusion LLMs — How They Work, Layer by Layer</title>
+  <meta name="description" data-i18n="page.desc" content="An interactive, illustrated explainer of diffusion language models for text and code — from first principles to Gemini Diffusion and LLaDA 2.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://d3js.org/d3.v7.min.js" defer></script>
+</head>
+<body>
+  <!-- ===== Header ===== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="#top" class="logo">
+        <svg class="logo-mark" viewBox="0 0 32 32" width="22" height="22" aria-hidden="true">
+          <rect x="2" y="2" width="6" height="6" rx="1" fill="currentColor" opacity="0.95"/>
+          <rect x="10" y="2" width="6" height="6" rx="1" fill="currentColor" opacity="0.55"/>
+          <rect x="18" y="2" width="6" height="6" rx="1" fill="currentColor" opacity="0.95"/>
+          <rect x="2" y="10" width="6" height="6" rx="1" fill="currentColor" opacity="0.25"/>
+          <rect x="10" y="10" width="6" height="6" rx="1" fill="currentColor" opacity="0.95"/>
+          <rect x="18" y="10" width="6" height="6" rx="1" fill="currentColor" opacity="0.55"/>
+          <rect x="2" y="18" width="6" height="6" rx="1" fill="currentColor" opacity="0.95"/>
+          <rect x="10" y="18" width="6" height="6" rx="1" fill="currentColor" opacity="0.25"/>
+          <rect x="18" y="18" width="6" height="6" rx="1" fill="currentColor" opacity="0.95"/>
+        </svg>
+        <span class="logo-text" data-i18n="nav.logo">Diffusion LLMs</span>
+      </a>
+      <nav class="header-nav">
+        <a href="#part-1" data-i18n="nav.part1">Foundations</a>
+        <a href="#part-2" data-i18n="nav.part2">Architecture</a>
+        <a href="#part-3" data-i18n="nav.part3">Training</a>
+        <a href="#part-4" data-i18n="nav.part4">Inference</a>
+        <a href="#part-5" data-i18n="nav.part5">The Stacks</a>
+        <a href="#part-6" data-i18n="nav.part6">Playground</a>
+      </nav>
+      <div class="header-controls">
+        <button class="lang-toggle" id="langToggle" aria-label="Toggle language">
+          <span class="lang-en active">EN</span>
+          <span class="lang-sep">/</span>
+          <span class="lang-zh">中</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Side TOC ===== -->
+  <aside class="side-toc" id="sideToc">
+    <div class="toc-title" data-i18n="toc.title">Contents</div>
+    <ol class="toc-list"></ol>
+  </aside>
+
+  <main class="main-content" id="top">
+
+    <!-- ===== HERO ===== -->
+    <section class="hero">
+      <div class="hero-eyebrow" data-i18n="hero.eyebrow">An interactive technical explainer</div>
+      <h1 class="hero-title">
+        <span data-i18n="hero.titleA">Diffusion</span>
+        <span class="hero-title-emphasis" data-i18n="hero.titleB">Large Language Models</span>
+      </h1>
+      <p class="hero-subtitle" data-i18n="hero.subtitle">
+        How a model can generate text and code by <em>denoising</em> a tape of <code>[MASK]</code> tokens — and why this matters for the next generation of AI.
+      </p>
+
+      <!-- Hero animated demo -->
+      <div class="hero-viz">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="hero.demoLabel">A 4-step diffusion decoding of a single sentence — watch the masks resolve</div>
+          <div id="hero-demo" class="hero-demo"></div>
+          <div class="viz-controls">
+            <button class="btn" id="heroPlay" data-i18n="hero.play">▶ Play</button>
+            <button class="btn btn-ghost" id="heroReset" data-i18n="hero.reset">↺ Reset</button>
+            <span class="viz-readout" id="heroStep">step 0 / 4</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-meta">
+        <div class="hero-meta-item">
+          <div class="hero-meta-label" data-i18n="hero.metaSections">Sections</div>
+          <div class="hero-meta-value">18</div>
+        </div>
+        <div class="hero-meta-item">
+          <div class="hero-meta-label" data-i18n="hero.metaViz">Interactive visualizations</div>
+          <div class="hero-meta-value">40+</div>
+        </div>
+        <div class="hero-meta-item">
+          <div class="hero-meta-label" data-i18n="hero.metaTime">Read time</div>
+          <div class="hero-meta-value">60 min</div>
+        </div>
+      </div>
+
+      <p class="hero-note" data-i18n="hero.note">
+        This page assumes you know what a Transformer is and roughly how autoregressive (left-to-right) language models like GPT or Llama work. Everything else is built from first principles. Toggle <span class="kbd">EN / 中</span> at the top to switch languages.
+      </p>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- PART 1 — FOUNDATIONS                                            -->
+    <!-- ============================================================== -->
+
+    <div class="part-divider" id="part-1">
+      <div class="part-number">Part 1</div>
+      <h2 class="part-title" data-i18n="part1.title">Foundations</h2>
+      <p class="part-tagline" data-i18n="part1.tag">From image diffusion to discrete tokens — and why the bridge is non-trivial.</p>
+    </div>
+
+    <!-- §1 -->
+    <section class="section" id="sec-1">
+      <div class="sec-num">§ 1</div>
+      <h2 class="sec-title" data-i18n="sec1.title">The Two Ways To Generate</h2>
+
+      <p data-i18n="sec1.p1">Every generative model answers one question: <em>given everything I've seen so far, what comes next?</em> Autoregressive language models answer it sequentially — one token at a time, left to right. Each new token is conditioned on the exact text of every token before it. This is what GPT, Llama, Claude, and Gemini (mostly) do.</p>
+
+      <p data-i18n="sec1.p2">Diffusion models answer the same question differently. Instead of building the output one token at a time, they start with a completely corrupted sequence — a tape full of <code>[MASK]</code> — and refine it over a small number of steps, deciding all positions in parallel each step. By the final step, every mask has been replaced with a real token. The model has generated the entire sequence not by writing it, but by <em>uncorrupting</em> it.</p>
+
+      <!-- Viz 1.1: AR vs Diffusion side-by-side animation -->
+      <figure class="viz-figure">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz1_1.label">Figure 1.1 — Side-by-side: autoregressive emission vs. diffusion denoising of the same sentence</div>
+          <div class="dual-viz">
+            <div class="dual-pane">
+              <div class="pane-title" data-i18n="viz1_1.arTitle">Autoregressive (left-to-right)</div>
+              <div id="viz1-1-ar" class="token-strip"></div>
+              <div class="pane-meta" id="viz1-1-ar-meta">step 0</div>
+            </div>
+            <div class="dual-pane">
+              <div class="pane-title" data-i18n="viz1_1.diffTitle">Diffusion (parallel denoising)</div>
+              <div id="viz1-1-diff" class="token-strip"></div>
+              <div class="pane-meta" id="viz1-1-diff-meta">step 0</div>
+            </div>
+          </div>
+          <div class="viz-controls">
+            <button class="btn" id="viz1-1-play" data-i18n="viz.play">▶ Play both</button>
+            <button class="btn btn-ghost" id="viz1-1-reset" data-i18n="viz.reset">↺ Reset</button>
+            <label class="slider-label">
+              <span data-i18n="viz1_1.speed">Speed</span>
+              <input type="range" id="viz1-1-speed" min="1" max="10" value="5">
+            </label>
+          </div>
+        </div>
+        <figcaption data-i18n="viz1_1.caption">The autoregressive model emits one token per timestep — 12 timesteps for 12 tokens. The diffusion model commits multiple positions per step and converges in 4 steps. Both reach the same final sentence, by very different paths.</figcaption>
+      </figure>
+
+      <p data-i18n="sec1.p3">Why would you choose the second approach? Three reasons, which we'll unpack throughout this page: <strong>parallelism</strong> (commit many tokens per step → potentially faster), <strong>bidirectionality</strong> (every token sees every other token while generating — including the ones to its right), and <strong>self-correction</strong> (a wrong token committed early can be revisited and replaced later). Autoregressive models cannot do any of these natively.</p>
+    </section>
+
+    <!-- §2 -->
+    <section class="section" id="sec-2">
+      <div class="sec-num">§ 2</div>
+      <h2 class="sec-title" data-i18n="sec2.title">Why Diffusion Was Born In Image Space</h2>
+
+      <p data-i18n="sec2.p1">Diffusion models did not start in language. They were invented for images, where they are now the dominant paradigm (Stable Diffusion, Midjourney, DALL·E, Sora's frame model, etc.). The core idea: take a real image, gradually add Gaussian noise until it's pure static, then train a neural network to <em>reverse</em> the noising one step at a time.</p>
+
+      <!-- Viz 2.1: Image diffusion noising/denoising -->
+      <figure class="viz-figure">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz2_1.label">Figure 2.1 — Drag the slider: forward Gaussian corruption, then reverse denoising</div>
+          <div id="viz2-1" class="image-diffusion-viz">
+            <canvas id="viz2-1-canvas" width="480" height="160"></canvas>
+            <div class="image-diffusion-labels">
+              <span data-i18n="viz2_1.clean">x₀ (clean)</span>
+              <span>→</span>
+              <span data-i18n="viz2_1.noisy">x_T (pure noise)</span>
+            </div>
+          </div>
+          <div class="viz-controls">
+            <label class="slider-label">
+              <span>t = <span id="viz2-1-tval">0.00</span></span>
+              <input type="range" id="viz2-1-t" min="0" max="100" value="0">
+            </label>
+            <button class="btn btn-ghost" id="viz2-1-toggle" data-i18n="viz2_1.toggle">Show reverse</button>
+          </div>
+        </div>
+        <figcaption data-i18n="viz2_1.caption">The forward process is a fixed Gaussian Markov chain: each step adds a little Gaussian noise. The reverse process is what the network learns. Notice that pixel values can be moved infinitesimally — adding 0.01 to a pixel still gives a valid pixel.</figcaption>
+      </figure>
+
+      <div class="callout callout-math">
+        <div class="callout-title" data-i18n="sec2.mathTitle">The math, in one line</div>
+        <p data-i18n="sec2.mathP">The forward Gaussian step is</p>
+        <div class="math-block">q(x_t | x_{t-1}) = N(x_t ; √(1-β_t) · x_{t-1} , β_t · I)</div>
+        <p data-i18n="sec2.mathP2">and the closed-form jump to any timestep is</p>
+        <div class="math-block">q(x_t | x_0) = N(x_t ; √(ᾱ_t) · x_0 , (1-ᾱ_t) · I)</div>
+        <p data-i18n="sec2.mathP3">with ᾱ_t = ∏(1-β_s). Training reduces to predicting the noise ε from x_t — the famous L_simple = ‖ε − ε_θ(x_t, t)‖².</p>
+      </div>
+
+      <p data-i18n="sec2.p2">This works beautifully for images because images live in a continuous space — every pixel is a real number, and "image + a little noise" is still a meaningful image. Now ask: <em>what is "a token + a little Gaussian noise"?</em></p>
+    </section>
+
+    <!-- §3 -->
+    <section class="section" id="sec-3">
+      <div class="sec-num">§ 3</div>
+      <h2 class="sec-title" data-i18n="sec3.title">Why Continuous Diffusion Fails On Text</h2>
+
+      <p data-i18n="sec3.p1">Tokens are discrete. A token is an integer ID in a vocabulary of, say, 128,000 entries. There is no meaningful "Gaussian neighborhood" around the integer 42 — the token whose ID is 42 might be the word "dog," and the token whose ID is 43 might be the suffix "##ing," and the token whose ID is 41 might be a Chinese character. Adding 0.5 to a token ID gives you nothing.</p>
+
+      <!-- Viz 3.1: Token space vs pixel space -->
+      <figure class="viz-figure">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz3_1.label">Figure 3.1 — Hover the pixel grid vs. the token grid. Pixels admit smooth interpolation; tokens don't.</div>
+          <div class="space-comparison">
+            <div class="space-comparison-pane">
+              <div class="pane-title" data-i18n="viz3_1.pixelTitle">Pixel space — continuous</div>
+              <canvas id="viz3-1-pixel" width="320" height="200"></canvas>
+              <div class="pane-meta"><span data-i18n="viz3_1.pixelMeta">hover to move the pixel value</span></div>
+            </div>
+            <div class="space-comparison-pane">
+              <div class="pane-title" data-i18n="viz3_1.tokenTitle">Token space — discrete</div>
+              <div id="viz3-1-token" class="token-grid"></div>
+              <div class="pane-meta"><span data-i18n="viz3_1.tokenMeta">hover a token — neighbors are unrelated</span></div>
+            </div>
+          </div>
+        </div>
+        <figcaption data-i18n="viz3_1.caption">Pixels live on a continuum: the value 0.42 and 0.43 are nearly indistinguishable. Tokens live on a vocabulary: token #42 ("dog") and token #43 ("##ing") have no relationship at all. The Gaussian forward kernel that powers image diffusion is meaningless in vocab space.</figcaption>
+      </figure>
+
+      <p data-i18n="sec3.p2">Two responses emerged. The first was <strong>embedding-space diffusion</strong> — embed each token into ℝ<sup>d</sup>, run Gaussian diffusion on the embeddings, round back to tokens at the end. It works, technically, but the rounding step is lossy and most of the model's capacity ends up learning the rounding boundary rather than language. By 2024, this approach was a historical branch.</p>
+
+      <p data-i18n="sec3.p3">The second response is what actually won: <strong>discrete diffusion</strong> — replace the Gaussian forward kernel with a categorical Markov chain that operates directly in vocabulary space. The rest of this page is about how that one idea unfolded into a serious competitor to autoregressive language modeling.</p>
+    </section>
+
+    <!-- §4 -->
+    <section class="section" id="sec-4">
+      <div class="sec-num">§ 4</div>
+      <h2 class="sec-title" data-i18n="sec4.title">Discrete Diffusion: A Markov Chain Over Tokens</h2>
+
+      <p data-i18n="sec4.p1">In a discrete diffusion model (the family called <strong>D3PM</strong>, introduced by Austin et al. in 2021), the forward "noising" step is governed by a transition matrix Q<sub>t</sub> of shape K × K, where K is the vocabulary size. Q<sub>t</sub>[i, j] is the probability of token i transitioning to token j at step t. Apply Q<sub>t</sub> repeatedly and you get gradually corrupted token sequences — no Gaussians, no embeddings, just stochastic token replacement.</p>
+
+      <p data-i18n="sec4.p2">Three concrete choices of Q<sub>t</sub> matter for language:</p>
+
+      <ul class="readable-list">
+        <li><strong data-i18n="sec4.uniform">Uniform.</strong> <span data-i18n="sec4.uniformP">Each step, each token has a small chance of being replaced by a uniformly random token from the vocabulary. Smooth, but introduces noise that has no semantic relationship to the original.</span></li>
+        <li><strong data-i18n="sec4.absorbing">Absorbing-state (MASK).</strong> <span data-i18n="sec4.absorbingP">Add a special <code>[MASK]</code> symbol to the vocabulary. Each step, each unmasked token is left alone with some probability, or replaced by <code>[MASK]</code>. Once masked, always masked. This is exactly the corruption process used by BERT — and it is the variant that powers every serious diffusion LLM today.</span></li>
+        <li><strong data-i18n="sec4.gaussian">Gaussian-over-tokens.</strong> <span data-i18n="sec4.gaussianP">Concentrate Q<sub>t</sub> near the identity using a token-ordering metric. Useful for ordinal data (like quantized image patches), but irrelevant for language since tokens have no natural ordering.</span></li>
+      </ul>
+
+      <!-- Viz 4.1: D3PM forward process — three variants -->
+      <figure class="viz-figure viz-figure-wide">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz4_1.label">Figure 4.1 — Pick a corruption variant and a corruption rate. Watch the same sentence corrupt three different ways.</div>
+          <div id="viz4-1" class="d3pm-viz">
+            <div class="d3pm-controls">
+              <div class="variant-picker">
+                <button class="variant-btn active" data-variant="absorbing" data-i18n="viz4_1.absorbing">Absorbing (MASK)</button>
+                <button class="variant-btn" data-variant="uniform" data-i18n="viz4_1.uniform">Uniform</button>
+                <button class="variant-btn" data-variant="gaussian" data-i18n="viz4_1.gaussian">Gaussian-over-tokens</button>
+              </div>
+              <label class="slider-label">
+                <span data-i18n="viz4_1.rate">corruption rate t = </span><span id="viz4-1-tval">0.00</span>
+                <input type="range" id="viz4-1-t" min="0" max="100" value="0">
+              </label>
+            </div>
+            <div id="viz4-1-output" class="token-strip token-strip-large"></div>
+          </div>
+        </div>
+        <figcaption data-i18n="viz4_1.caption">Absorbing-state corruption replaces tokens with <code>[MASK]</code> — the model knows which positions are corrupted. Uniform corruption replaces tokens with random other tokens — the model doesn't know which are corrupted, and must figure it out. Almost all modern diffusion LLMs use absorbing-state because of this information advantage.</figcaption>
+      </figure>
+
+      <p data-i18n="sec4.p3">From here on, when we say "diffusion language model" we mean <strong>masked (absorbing-state) discrete diffusion</strong>. This is the family that includes MD4, MDLM, SEDD, LLaDA, Gemini Diffusion, and Mercury.</p>
+    </section>
+
+    <!-- §5 -->
+    <section class="section" id="sec-5">
+      <div class="sec-num">§ 5</div>
+      <h2 class="sec-title" data-i18n="sec5.title">The Simplification That Made It All Click</h2>
+
+      <p data-i18n="sec5.p1">For a few years (2021–2023), discrete diffusion was a niche topic — interesting math, but the models trained sluggishly and underperformed BERT. In 2024 two papers (<strong>MD4</strong> from Google DeepMind, and <strong>MDLM</strong> from a separate group) showed that the entire training objective for masked diffusion collapses to something stunningly simple:</p>
+
+      <div class="callout callout-math callout-feature">
+        <div class="callout-title" data-i18n="sec5.formulaTitle">The training loss, simplified</div>
+        <div class="math-block math-block-large">L(θ) = ∫₀¹ w(t) · CrossEntropy( predicted token,  true token )  dt</div>
+        <p data-i18n="sec5.formulaP">— summed over masked positions only, where t is the mask rate and w(t) is a fixed weighting derived from the noise schedule. For the standard "linear" schedule (mask each token with probability t), w(t) = 1/t.</p>
+      </div>
+
+      <p data-i18n="sec5.p2">Read that twice. This is just <strong>BERT's masked language modeling loss</strong>, but with the mask rate sampled uniformly from [0, 1] instead of fixed at 15%, and with a 1/t weighting. The entire mathematical edifice of "diffusion" — Markov chains, ELBOs, score functions, transition matrices — collapses, in the masked variant, to "weighted MLM with a continuous schedule."</p>
+
+      <!-- Viz 5.1: MDLM loss visualization -->
+      <figure class="viz-figure">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz5_1.label">Figure 5.1 — Drag t. Watch the mask rate change, and see how the 1/t loss weight emphasizes light masking.</div>
+          <div id="viz5-1" class="mdlm-viz">
+            <div class="mdlm-sentence-row">
+              <div class="mdlm-sentence" id="viz5-1-sentence"></div>
+            </div>
+            <div class="mdlm-curve-row">
+              <svg id="viz5-1-curve" viewBox="0 0 500 160"></svg>
+            </div>
+          </div>
+          <div class="viz-controls">
+            <label class="slider-label">
+              <span>t = <span id="viz5-1-tval">0.50</span></span>
+              <input type="range" id="viz5-1-t" min="1" max="99" value="50">
+            </label>
+            <span class="viz-readout"><span data-i18n="viz5_1.weightLabel">weight w(t) = 1/t = </span><span id="viz5-1-w">2.00</span></span>
+          </div>
+        </div>
+        <figcaption data-i18n="viz5_1.caption">The loss is computed only on the masked positions (highlighted). At small t (light corruption), w(t) is large and each per-token mistake costs more — the model is forced to be very accurate when context is plentiful. At large t (heavy corruption), w(t) is small and the model is given more slack.</figcaption>
+      </figure>
+
+      <p data-i18n="sec5.p3">This collapse is the moment diffusion LLMs became viable. Training is now operationally indistinguishable from BERT's MLM — every existing MLM trainer, every distributed-training trick, every optimizer ablation, transfers directly. The "diffusion" content lives entirely in (a) how you choose the schedule, (b) how you weight the loss, and (c) how you sample from the trained model. The model itself is just a Transformer trained on a generalized masked-LM objective.</p>
+
+      <p data-i18n="sec5.p4">LLaDA's training loss, published by Renmin University + Ant Group in February 2025, is exactly this — Equation 3 of the LLaDA paper is the linear-schedule special case of MD4's general formula. The simplification turned out to be the same one, found independently.</p>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- PART 2 — ARCHITECTURE                                            -->
+    <!-- ============================================================== -->
+
+    <div class="part-divider" id="part-2">
+      <div class="part-number">Part 2</div>
+      <h2 class="part-title" data-i18n="part2.title">Architecture</h2>
+      <p class="part-tagline" data-i18n="part2.tag">What changes in the Transformer when you train it as a diffusion model.</p>
+    </div>
+
+    <!-- §6 -->
+    <section class="section" id="sec-6">
+      <div class="sec-num">§ 6</div>
+      <h2 class="sec-title" data-i18n="sec6.title">The One Change That Changes Everything: Bidirectional Attention</h2>
+
+      <p data-i18n="sec6.p1">An autoregressive Transformer (GPT, Llama) uses a <em>causal</em> attention mask: token at position i can attend only to positions 1 through i. This is the structural enforcement of left-to-right generation. A diffusion Transformer (LLaDA, Gemini Diffusion, Mercury) removes that mask. Token at position i can attend to <em>every</em> position — including positions to its right.</p>
+
+      <!-- Viz 6.1: Attention mask comparison -->
+      <figure class="viz-figure viz-figure-wide">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz6_1.label">Figure 6.1 — Click each mask. Black = attention allowed, gray = blocked. The diagonal is always allowed (self).</div>
+          <div class="attention-mask-viz">
+            <div class="mask-pane">
+              <button class="pane-title pane-title-btn active" data-mask="causal" data-i18n="viz6_1.causal">Causal (AR / Llama)</button>
+              <svg id="viz6-1-causal" class="mask-svg" viewBox="0 0 200 200"></svg>
+              <div class="pane-desc" data-i18n="viz6_1.causalDesc">Position i sees 1…i. KV cache is reusable across emit steps.</div>
+            </div>
+            <div class="mask-pane">
+              <button class="pane-title pane-title-btn" data-mask="bidirectional" data-i18n="viz6_1.bidir">Bidirectional (full MDLM)</button>
+              <svg id="viz6-1-bidir" class="mask-svg" viewBox="0 0 200 200"></svg>
+              <div class="pane-desc" data-i18n="viz6_1.bidirDesc">Every position sees every other. KV cache is destroyed.</div>
+            </div>
+            <div class="mask-pane">
+              <button class="pane-title pane-title-btn" data-mask="block" data-i18n="viz6_1.block">Block diffusion (production)</button>
+              <svg id="viz6-1-block" class="mask-svg" viewBox="0 0 200 200"></svg>
+              <div class="pane-desc" data-i18n="viz6_1.blockDesc">Bidirectional within a block, causal between blocks. KV cache for committed blocks.</div>
+            </div>
+          </div>
+          <div class="viz-controls">
+            <label class="slider-label">
+              <span data-i18n="viz6_1.blockSize">block size = </span><span id="viz6-1-bsval">4</span>
+              <input type="range" id="viz6-1-bs" min="1" max="16" value="4">
+            </label>
+          </div>
+        </div>
+        <figcaption data-i18n="viz6_1.caption">This is the central architectural trade-off of diffusion LLMs. Full bidirectional attention is what lets every token see global context — but it destroys the KV cache that makes autoregressive generation fast. Block diffusion is the engineering compromise: bidirectional <em>within</em> a block (so a block decodes jointly), causal <em>between</em> blocks (so committed blocks become a cacheable prefix).</figcaption>
+      </figure>
+
+      <p data-i18n="sec6.p2">Drag the block-size slider above. At block size 1, the mask is fully causal — the model is operationally identical to AR. At block size = sequence length, the mask is fully bidirectional — full MDLM. In between, you get production block diffusion. <strong>This single slider is the AR-to-diffusion continuum.</strong> Modern systems live around block size 32.</p>
+    </section>
+
+    <!-- §7 -->
+    <section class="section" id="sec-7">
+      <div class="sec-num">§ 7</div>
+      <h2 class="sec-title" data-i18n="sec7.title">An Anatomy of LLaDA-8B</h2>
+
+      <p data-i18n="sec7.p1">To make this concrete: LLaDA-8B is a Llama-3-class Transformer trained as a diffusion model. Here's what changes and what stays.</p>
+
+      <!-- Viz 7.1: Architecture diff -->
+      <figure class="viz-figure">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz7_1.label">Figure 7.1 — Hover each component. Green = same as Llama-3, orange = changed for diffusion.</div>
+          <div id="viz7-1" class="arch-anatomy"></div>
+        </div>
+        <figcaption data-i18n="viz7_1.caption">The architecture is mostly Llama-3. Three things change: attention mask (causal → bidirectional), loss (next-token CE → weighted masked CE on masked positions), and GQA (LLaDA drops grouped-query attention, returning to 32 independent query heads). The time-step embedding for the mask rate <em>t</em> is injected via AdaLN-style FFN scaling, similar to image diffusion conditioning.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- PART 3 — TRAINING                                                -->
+    <!-- ============================================================== -->
+
+    <div class="part-divider" id="part-3">
+      <div class="part-number">Part 3</div>
+      <h2 class="part-title" data-i18n="part3.title">Training</h2>
+      <p class="part-tagline" data-i18n="part3.tag">The forward process, the noise schedule, and how to convert an AR checkpoint to a diffusion model.</p>
+    </div>
+
+    <!-- §8 -->
+    <section class="section" id="sec-8">
+      <div class="sec-num">§ 8</div>
+      <h2 class="sec-title" data-i18n="sec8.title">A Training Step, In Slow Motion</h2>
+
+      <p data-i18n="sec8.p1">Here is exactly what happens for one batch element during training:</p>
+
+      <ol class="readable-list">
+        <li data-i18n="sec8.step1"><strong>Sample t</strong> ~ Uniform(0, 1). This is the mask rate for this example.</li>
+        <li data-i18n="sec8.step2"><strong>Corrupt:</strong> for each position i, independently set x_t[i] = <code>[MASK]</code> with probability t, else x_t[i] = x_0[i].</li>
+        <li data-i18n="sec8.step3"><strong>Forward pass:</strong> run the bidirectional Transformer on x_t, get logits at every position (yes, including unmasked ones — they're ignored).</li>
+        <li data-i18n="sec8.step4"><strong>Cross-entropy on masked positions only,</strong> weighted by 1/t.</li>
+        <li data-i18n="sec8.step5"><strong>Backprop, optimizer step, next batch.</strong></li>
+      </ol>
+
+      <!-- Viz 8.1: Training step playback -->
+      <figure class="viz-figure">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz8_1.label">Figure 8.1 — Step through one training example. Sample t, corrupt, predict, compute loss.</div>
+          <div id="viz8-1" class="train-step-viz"></div>
+          <div class="viz-controls">
+            <button class="btn" id="viz8-1-next" data-i18n="viz8_1.next">Next step →</button>
+            <button class="btn btn-ghost" id="viz8-1-reset" data-i18n="viz.reset">↺ Reset</button>
+            <button class="btn btn-ghost" id="viz8-1-newt" data-i18n="viz8_1.newt">New sentence + t</button>
+          </div>
+        </div>
+        <figcaption data-i18n="viz8_1.caption">Notice that every position gets a prediction, but only the masked positions contribute to the loss. This is just BERT MLM with a randomized mask rate.</figcaption>
+      </figure>
+    </section>
+
+    <!-- §9 -->
+    <section class="section" id="sec-9">
+      <div class="sec-num">§ 9</div>
+      <h2 class="sec-title" data-i18n="sec9.title">The Noise Schedule: How Fast The Mask Climbs</h2>
+
+      <p data-i18n="sec9.p1">The noise schedule α(t) maps a continuous time t ∈ [0, 1] to the fraction of tokens unmasked. At t = 0, α = 1 (no masking). At t = 1, α = 0 (everything masked). The shape of the schedule between those endpoints determines what mask rates the loss emphasizes — and, by symmetry, the step distribution at inference.</p>
+
+      <!-- Viz 9.1: Schedule comparison -->
+      <figure class="viz-figure">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz9_1.label">Figure 9.1 — Three common schedules, plus the loss weighting they induce</div>
+          <div id="viz9-1" class="schedule-viz">
+            <div class="schedule-row">
+              <svg id="viz9-1-alpha" viewBox="0 0 240 180"></svg>
+              <svg id="viz9-1-weight" viewBox="0 0 240 180"></svg>
+            </div>
+            <div class="schedule-picker">
+              <button class="schedule-btn active" data-schedule="linear" data-i18n="viz9_1.linear">Linear</button>
+              <button class="schedule-btn" data-schedule="cosine" data-i18n="viz9_1.cosine">Cosine</button>
+              <button class="schedule-btn" data-schedule="poly2" data-i18n="viz9_1.poly2">Polynomial (k=2)</button>
+              <button class="schedule-btn" data-schedule="poly3" data-i18n="viz9_1.poly3">Polynomial (k=3)</button>
+            </div>
+          </div>
+        </div>
+        <figcaption data-i18n="viz9_1.caption">Linear is the LLaDA default (α(t) = 1−t, w(t) = 1/t). Cosine smooths the endpoints. Polynomial-k shifts the weight toward heavier or lighter corruption. The choice changes <em>what the model spends its capacity learning</em>: linear over-weights the easy cases (few masks), polynomial-2 distributes more evenly.</figcaption>
+      </figure>
+    </section>
+
+    <!-- §10 -->
+    <section class="section" id="sec-10">
+      <div class="sec-num">§ 10</div>
+      <h2 class="sec-title" data-i18n="sec10.title">AR → Diffusion: The WSD Curriculum</h2>
+
+      <p data-i18n="sec10.p1">Training a 100-billion-parameter language model from scratch is an order-of-magnitude commitment of GPU-hours. Nobody wants to throw away an existing pretrained autoregressive checkpoint and start over for the diffusion variant. <strong>AR2Diff</strong> (DeepMind, 2024) and <strong>WSD</strong> (Ant Group, 2025) both solve this: take an AR checkpoint, gradually morph it into a diffusion model.</p>
+
+      <p data-i18n="sec10.p2">LLaDA2.0's Warmup-Stable-Decay curriculum is the most ambitious instance. It parameterizes the model by a <em>block size</em> L_B that controls how much bidirectional attention is on. At L_B = 1, the model is pure AR. At L_B = sequence length, it is pure full-sequence diffusion. The curriculum walks the model up the continuum, lets it stabilize in pure-diffusion mode, then walks it back down to a small operational block size for inference.</p>
+
+      <!-- Viz 10.1: WSD curriculum animator -->
+      <figure class="viz-figure viz-figure-wide">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz10_1.label">Figure 10.1 — Play the LLaDA2.0 WSD curriculum. Block size walks 1 → 4096 → 32.</div>
+          <div id="viz10-1" class="wsd-viz">
+            <svg id="viz10-1-chart" viewBox="0 0 720 220"></svg>
+            <div class="wsd-mask-display">
+              <div class="pane-meta"><span data-i18n="viz10_1.lbLabel">current L_B = </span><span id="viz10-1-lb">1</span></div>
+              <svg id="viz10-1-mask" viewBox="0 0 200 200"></svg>
+            </div>
+          </div>
+          <div class="viz-controls">
+            <button class="btn" id="viz10-1-play" data-i18n="viz.play">▶ Play curriculum</button>
+            <button class="btn btn-ghost" id="viz10-1-reset" data-i18n="viz.reset">↺ Reset</button>
+            <span class="viz-readout"><span data-i18n="viz10_1.phase">phase: </span><span id="viz10-1-phase">warmup</span></span>
+          </div>
+        </div>
+        <figcaption data-i18n="viz10_1.caption">The warmup phase (L_B: 1 → 4 → 32 → 64 → 4096) smoothly anneals the AR model into full-sequence diffusion mode while preserving the pretrained knowledge. The stable phase (L_B = 4096) trains pure MDLM on the full sequence. The decay phase (L_B: 4096 → 32) compresses back down to a production block size that supports KV-cache reuse at inference.</figcaption>
+      </figure>
+
+      <div class="callout">
+        <div class="callout-title" data-i18n="sec10.gaussianTitle">The Gaussian-noise hack</div>
+        <p data-i18n="sec10.gaussianP">During AR pretraining, the embedding for the <code>[MASK]</code> token never receives gradient (because <code>[MASK]</code> is never seen), so its weight decays to zero. When you switch to diffusion training, every masked position has a near-zero embedding — and at high mask rates the model's predictions collapse into garbage. The LLaDA2.0 paper documents a precise fix: <em>inject independent Gaussian noise into the embedding-layer output for masked tokens during the first iterations</em>. This keeps the L2 norm of the masked-token embedding meaningful without re-initializing weights (which would cause catastrophic forgetting). Small, ugly, essential.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- PART 4 — INFERENCE                                                -->
+    <!-- ============================================================== -->
+
+    <div class="part-divider" id="part-4">
+      <div class="part-number">Part 4</div>
+      <h2 class="part-title" data-i18n="part4.title">Inference</h2>
+      <p class="part-tagline" data-i18n="part4.tag">The denoising loop, block diffusion, parallel decoding, and self-correction.</p>
+    </div>
+
+    <!-- §11 -->
+    <section class="section" id="sec-11">
+      <div class="sec-num">§ 11</div>
+      <h2 class="sec-title" data-i18n="sec11.title">The Basic Denoising Loop</h2>
+
+      <p data-i18n="sec11.p1">At inference time, the model starts with a fully masked sequence — every position is <code>[MASK]</code> — and runs N denoising steps. Each step is one forward pass through the Transformer, which emits a probability distribution over the vocabulary at every position. The sampler then decides <em>which</em> masked positions to commit this step, samples a token at each of those, and leaves the rest masked for the next step.</p>
+
+      <!-- Viz 11.1: Denoising loop animator -->
+      <figure class="viz-figure viz-figure-wide">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz11_1.label">Figure 11.1 — Step through the denoising loop. At each step you see the prediction distribution and which positions commit.</div>
+          <div id="viz11-1" class="denoise-viz"></div>
+          <div class="viz-controls">
+            <button class="btn" id="viz11-1-step" data-i18n="viz11_1.step">Next step →</button>
+            <button class="btn" id="viz11-1-play" data-i18n="viz.play">▶ Auto-play</button>
+            <button class="btn btn-ghost" id="viz11-1-reset" data-i18n="viz.reset">↺ Reset</button>
+            <label class="slider-label">
+              <span data-i18n="viz11_1.steps">total steps N = </span><span id="viz11-1-nval">8</span>
+              <input type="range" id="viz11-1-n" min="2" max="16" value="8">
+            </label>
+          </div>
+        </div>
+        <figcaption data-i18n="viz11_1.caption">N is the inference-time step budget. With N = sequence length, the model commits one token per step — same compute as AR. With N small, many tokens commit per step in parallel. The conditional-independence assumption ("all masked positions are independent given the current context") gets stretched as N shrinks, which is the tradeoff.</figcaption>
+      </figure>
+    </section>
+
+    <!-- §12 -->
+    <section class="section" id="sec-12">
+      <div class="sec-num">§ 12</div>
+      <h2 class="sec-title" data-i18n="sec12.title">Remasking Strategies: Who Commits This Step?</h2>
+
+      <p data-i18n="sec12.p1">The sampler's central decision is <em>which positions to commit</em> at each step. The four dominant strategies, in increasing order of sophistication:</p>
+
+      <!-- Viz 12.1: Remasking strategy comparison -->
+      <figure class="viz-figure viz-figure-wide">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz12_1.label">Figure 12.1 — Same model, same prompt, four remasking strategies, side-by-side</div>
+          <div id="viz12-1" class="remask-viz"></div>
+          <div class="viz-controls">
+            <button class="btn" id="viz12-1-play" data-i18n="viz12_1.runall">▶ Run all four</button>
+            <button class="btn btn-ghost" id="viz12-1-reset" data-i18n="viz.reset">↺ Reset</button>
+          </div>
+        </div>
+        <figcaption data-i18n="viz12_1.caption">Random remasking picks positions uniformly — matches the training objective, but quality is poor at small N. Low-confidence remasking ranks positions by the model's top-1 probability and commits the most confident — empirical workhorse, dominates random remasking by ~10 points on GSM8K. Confidence-threshold variants commit any position above τ — the basis of Fast-dLLM and CAP. Margin-based variants commit on (top-1 − top-2), more robust under miscalibration.</figcaption>
+      </figure>
+    </section>
+
+    <!-- §13 -->
+    <section class="section" id="sec-13">
+      <div class="sec-num">§ 13</div>
+      <h2 class="sec-title" data-i18n="sec13.title">Block Diffusion: Killing the KV-Cache Problem</h2>
+
+      <p data-i18n="sec13.p1">Recall from §6: full bidirectional attention destroys the KV cache. Every denoising step re-attends from scratch across the whole sequence. With sequence length 4096 and 32 steps, that's 32 × O(4096²) attention computations per generation. This is what makes vanilla MDLM uncompetitive at production scale.</p>
+
+      <p data-i18n="sec13.p2">Block diffusion fixes it. Partition the output into blocks of size B (typically 32). Within a block, attention is bidirectional — the block decodes jointly. Between blocks, attention is causal — block k attends only to blocks 1…k. Once block k is fully decoded, its K/V is frozen and cached. The decoder marches left-to-right at the block level while doing parallel bidirectional refinement at the token level.</p>
+
+      <!-- Viz 13.1: Block diffusion animator -->
+      <figure class="viz-figure viz-figure-wide">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz13_1.label">Figure 13.1 — Block-by-block decoding. Watch each block resolve, then become a cacheable prefix.</div>
+          <div id="viz13-1" class="block-viz"></div>
+          <div class="viz-controls">
+            <button class="btn" id="viz13-1-play" data-i18n="viz.play">▶ Play</button>
+            <button class="btn btn-ghost" id="viz13-1-reset" data-i18n="viz.reset">↺ Reset</button>
+            <label class="slider-label">
+              <span data-i18n="viz13_1.blocksize">block size B = </span><span id="viz13-1-bsval">8</span>
+              <input type="range" id="viz13-1-bs" min="4" max="16" value="8">
+            </label>
+          </div>
+        </div>
+        <figcaption data-i18n="viz13_1.caption">This is the structural backbone of Gemini Diffusion, LLaDA2.0/2.1, Mercury, and Seed Diffusion. Block size 32 has emerged as a near-universal sweet spot. LMSYS observes that block diffusion "bears a high degree of similarity to chunked-prefill" — the serving primitives are the same as existing AR engines, which is why SGLang could ship Day-0 support.</figcaption>
+      </figure>
+    </section>
+
+    <!-- §14 -->
+    <section class="section" id="sec-14">
+      <div class="sec-num">§ 14</div>
+      <h2 class="sec-title" data-i18n="sec14.title">Confidence-Aware Parallel: The Speed Lever</h2>
+
+      <p data-i18n="sec14.p1">Block diffusion alone costs T_block forward passes per block. The decisive speedup comes from <em>committing many positions per pass</em>. The dominant policy is <strong>Confidence-Aware Parallel (CAP)</strong>: in one forward pass, commit every masked position in the active block whose top-1 probability exceeds threshold τ. Positions below τ stay masked and get re-scored next step.</p>
+
+      <!-- Viz 14.1: CAP threshold interactive -->
+      <figure class="viz-figure viz-figure-wide">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz14_1.label">Figure 14.1 — Drag τ. Watch how many tokens commit per pass, and how quality degrades when τ drops too low.</div>
+          <div id="viz14-1" class="cap-viz"></div>
+          <div class="viz-controls">
+            <label class="slider-label">
+              <span data-i18n="viz14_1.tau">τ = </span><span id="viz14-1-tval">0.95</span>
+              <input type="range" id="viz14-1-tau" min="50" max="99" value="95">
+            </label>
+            <button class="btn" id="viz14-1-play" data-i18n="viz14_1.gen">▶ Generate</button>
+            <button class="btn btn-ghost" id="viz14-1-reset" data-i18n="viz.reset">↺ Reset</button>
+          </div>
+        </div>
+        <figcaption data-i18n="viz14_1.caption">From the LLaDA2.0 ablation: τ = 0.95 produces score 70.15 at 2.55 tokens-per-forward-pass; τ = 0.85 raises throughput to 3.31 TPF but drops the score to 67.90 — an unacceptable quality cliff per the authors' own framing. CAP works only because LLaDA2.0 trains an auxiliary <em>confidence loss</em> that selectively sharpens predictions <strong>only on correctly predicted tokens</strong>, so the model's confidence becomes a trustworthy commit signal.</figcaption>
+      </figure>
+
+      <div class="callout">
+        <div class="callout-title" data-i18n="sec14.calloutTitle">The CAP confidence loss</div>
+        <p data-i18n="sec14.calloutP">L(θ) = L_SFT(θ) + λ · L_conf(θ), where L_conf is the entropy of the predicted distribution, computed <em>only on tokens that were correctly predicted</em>. The "correctly predicted" qualifier is critical — minimizing entropy unconditionally would push the model toward confident wrong answers. Minimizing it only on the correct subset selectively sharpens calibration where it's safe.</p>
+      </div>
+    </section>
+
+    <!-- §15 -->
+    <section class="section" id="sec-15">
+      <div class="sec-num">§ 15</div>
+      <h2 class="sec-title" data-i18n="sec15.title">Self-Correction: T2T Editing and Multi-Block Editing</h2>
+
+      <p data-i18n="sec15.p1">CAP has a structural weakness: a token committed early on weak evidence is final, and the loop has no mechanism to revisit it. LLaDA2.1's <strong>T2T (Token-to-Token) editing</strong> fixes this. At each step, the sampler maintains two sets:</p>
+
+      <ul class="readable-list">
+        <li><strong>Γ_t</strong> — <span data-i18n="sec15.unmask">positions that are currently <code>[MASK]</code> and whose top-1 candidate exceeds threshold τ_mask (the standard unmasking set)</span></li>
+        <li><strong>Δ_t</strong> — <span data-i18n="sec15.edit">positions that are currently <em>not</em> <code>[MASK]</code>, but whose top-1 candidate differs from the committed token <em>and</em> exceeds threshold τ_edit (the edit set)</span></li>
+      </ul>
+
+      <p data-i18n="sec15.p2">Positions in Δ_t get overwritten — a committed token is replaced by the new top-1 candidate. This is how a diffusion model can fix its own early-step mistakes mid-generation.</p>
+
+      <!-- Viz 15.1: T2T editing -->
+      <figure class="viz-figure viz-figure-wide">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz15_1.label">Figure 15.1 — Watch a wrong token get committed early, then replaced by T2T after more context arrives</div>
+          <div id="viz15-1" class="t2t-viz"></div>
+          <div class="viz-controls">
+            <button class="btn" id="viz15-1-play" data-i18n="viz.play">▶ Play</button>
+            <button class="btn btn-ghost" id="viz15-1-reset" data-i18n="viz.reset">↺ Reset</button>
+            <label class="slider-label">
+              <span data-i18n="viz15_1.taumask">τ_mask = </span><span id="viz15-1-tmval">0.7</span>
+              <input type="range" id="viz15-1-tm" min="50" max="95" value="70">
+            </label>
+            <label class="slider-label">
+              <span data-i18n="viz15_1.tauedit">τ_edit = </span><span id="viz15-1-teval">0.5</span>
+              <input type="range" id="viz15-1-te" min="30" max="80" value="50">
+            </label>
+          </div>
+        </div>
+        <figcaption data-i18n="viz15_1.caption">LLaDA2.1 ships two operating points. <em>Speedy mode</em> uses τ_mask ≈ 0.5, τ_edit ≈ 0.0 — commits aggressively, lets T2T clean up. <em>Quality mode</em> uses τ_mask ≈ 0.7, τ_edit ≈ 0.5 — conservative commitment, minimal editing. Speedy mode is 2.1× faster than LLaDA2.0 and quality-equivalent, because T2T repairs the over-commitments.</figcaption>
+      </figure>
+
+      <p data-i18n="sec15.p3"><strong>Multi-Block Editing (MBE)</strong> extends this across block boundaries: after block k+1 is decoded, the sampler revisits positions in blocks 1…k whose newly-available right-context changes their top-1 prediction. Architecturally this means breaking the K/V cache for any block where edits trigger and re-running attention — expensive, but only triggered when needed. LLaDA2.1 reports MBE consistently improves benchmarks on reasoning and coding tasks where late evidence invalidates early commitments.</p>
+    </section>
+
+    <!-- §16 -->
+    <section class="section" id="sec-16">
+      <div class="sec-num">§ 16</div>
+      <h2 class="sec-title" data-i18n="sec16.title">Speed vs. Quality: The Real Tradeoff Curve</h2>
+
+      <p data-i18n="sec16.p1">Every diffusion-LLM acceleration trick is a point on a single curve: throughput vs. benchmark score. The marketing-grade "10× faster than autoregressive" numbers come from comparing favorable conditions on one side with unfavorable conditions on the other (small GPU, no continuous batching, etc.). The honest controlled-comparison number is ~2×.</p>
+
+      <!-- Viz 16.1: Tradeoff curve -->
+      <figure class="viz-figure viz-figure-wide">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz16_1.label">Figure 16.1 — Throughput vs. quality, controlled comparison on 8×H20</div>
+          <div id="viz16-1" class="tradeoff-viz">
+            <svg id="viz16-1-chart" viewBox="0 0 720 400"></svg>
+          </div>
+        </div>
+        <figcaption data-i18n="viz16_1.caption">Data from the LMSYS Day-0 SGLang post (Dec 2025) and the LLaDA2.0 paper. Same hardware, same TP=8, same serving stack. The honest number for "diffusion vs. AR speedup at parity quality" is ~1.9–2.1× on small batch. Marketing-grade 10× numbers reflect unfavorable AR baselines.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- PART 5 — THE STACKS                                              -->
+    <!-- ============================================================== -->
+
+    <div class="part-divider" id="part-5">
+      <div class="part-number">Part 5</div>
+      <h2 class="part-title" data-i18n="part5.title">The Stacks</h2>
+      <p class="part-tagline" data-i18n="part5.tag">Google DeepMind's four-layer stack, and Ant Group's open-source LLaDA lineage.</p>
+    </div>
+
+    <!-- §17 -->
+    <section class="section" id="sec-17">
+      <div class="sec-num">§ 17</div>
+      <h2 class="sec-title" data-i18n="sec17.title">Google DeepMind: MD4 → AR2Diff → Gemini Diffusion</h2>
+
+      <p data-i18n="sec17.p1">DeepMind's diffusion-LLM work is a four-layer stack, assembled over roughly 24 months. The math layer (MD4) gave the simplification we unpacked in §5. The schedule generalization (GenMD4) made the noise schedule learnable per-token. The transfer recipe (AR2Diff) let an existing AR checkpoint become a diffusion model with a small additional pretraining budget. The serving system (Gemini Diffusion) is the productization — a block-diffusion model demoed at Google I/O 2025.</p>
+
+      <!-- Viz 17.1: DeepMind timeline -->
+      <figure class="viz-figure viz-figure-wide">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz17_1.label">Figure 17.1 — DeepMind's diffusion-LLM stack, click each layer</div>
+          <div id="viz17-1" class="dm-timeline"></div>
+        </div>
+      </figure>
+
+      <!-- Viz 17.2: Gemini Diffusion benchmark radar -->
+      <figure class="viz-figure">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz17_2.label">Figure 17.2 — Gemini Diffusion vs. Gemini 2.0 Flash-Lite, by benchmark category</div>
+          <div id="viz17-2" class="benchmark-radar">
+            <svg id="viz17-2-svg" viewBox="0 0 480 480"></svg>
+            <div class="radar-legend">
+              <div class="legend-row"><span class="legend-swatch legend-swatch-diff"></span><span>Gemini Diffusion</span></div>
+              <div class="legend-row"><span class="legend-swatch legend-swatch-ar"></span><span>Gemini 2.0 Flash-Lite (AR)</span></div>
+            </div>
+          </div>
+        </div>
+        <figcaption data-i18n="viz17_2.caption">Within ~1 point of Flash-Lite on code and short math (HumanEval, MBPP, LiveCodeBench, BigCodeBench, AIME 2025). Falls 10–16 points behind on multi-hop reasoning and broad knowledge (GPQA Diamond, BIG-Bench Hard, Global MMLU Lite). This is the <em>coordination problem</em>: parallel commitment within a block struggles on long chains of dependent inferences. Block diffusion partially recovers AR's prefix-conditioning, but not entirely.</figcaption>
+      </figure>
+    </section>
+
+    <!-- §18 -->
+    <section class="section" id="sec-18">
+      <div class="sec-num">§ 18</div>
+      <h2 class="sec-title" data-i18n="sec18.title">Ant Group / inclusionAI: The LLaDA Lineage</h2>
+
+      <p data-i18n="sec18.p1">In a 12-month sprint, Ant Group and Renmin University released five generations of open-source diffusion LLMs — culminating in LLaDA2.0-flash, the first 100B-parameter diffusion model. Every checkpoint is MIT/Apache licensed; every paper ships with code. This is the most aggressive open-source push in the diffusion-LLM space.</p>
+
+      <!-- Viz 18.1: LLaDA timeline -->
+      <figure class="viz-figure viz-figure-wide">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz18_1.label">Figure 18.1 — Five generations of LLaDA. Click each.</div>
+          <div id="viz18-1" class="llada-timeline"></div>
+        </div>
+      </figure>
+
+      <!-- Viz 18.2: LLaDA2.0 MoE diagram -->
+      <figure class="viz-figure">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz18_2.label">Figure 18.2 — LLaDA2.0-flash MoE routing: 256 routed experts + 1 shared, top-8 per token</div>
+          <div id="viz18-2" class="moe-viz"></div>
+        </div>
+        <figcaption data-i18n="viz18_2.caption">100B total parameters; only ~6.1B active per token thanks to the 1/32 activation ratio. The shared expert is always active; the router picks 8 of 256 routed experts per token, weighted by sigmoid routing scores (aux-loss-free).</figcaption>
+      </figure>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- PART 6 — PLAYGROUND                                              -->
+    <!-- ============================================================== -->
+
+    <div class="part-divider" id="part-6">
+      <div class="part-number">Part 6</div>
+      <h2 class="part-title" data-i18n="part6.title">Playground</h2>
+      <p class="part-tagline" data-i18n="part6.tag">Try it yourself. Run a denoising loop. See the reverse curse. Tune the speed/quality knob.</p>
+    </div>
+
+    <!-- §19 -->
+    <section class="section" id="sec-19">
+      <div class="sec-num">§ 19</div>
+      <h2 class="sec-title" data-i18n="sec19.title">Build Your Own Denoising Loop</h2>
+
+      <p data-i18n="sec19.p1">Pick a sentence. Pick a block size, a number of steps, a remasking strategy. Watch the model "generate" by uncorrupting a tape of masks. (This is a simulated diffusion process — the predictions are pre-baked from a real LLaDA-style trace, not a live model — but the dynamics are faithful.)</p>
+
+      <figure class="viz-figure viz-figure-wide">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz19_1.label">Figure 19.1 — Full diffusion-decoding playground</div>
+          <div id="viz19-1" class="playground-viz"></div>
+        </div>
+      </figure>
+    </section>
+
+    <!-- §20 -->
+    <section class="section" id="sec-20">
+      <div class="sec-num">§ 20</div>
+      <h2 class="sec-title" data-i18n="sec20.title">The Reverse Curse Demo</h2>
+
+      <p data-i18n="sec20.p1">Autoregressive models trained on "A is B" struggle to answer "B is A" at inference. This is the <em>reverse curse</em>, and it is a direct consequence of left-to-right training: the model never sees "A is B" as evidence for "B is A." Bidirectional MLE training (i.e., diffusion training) sees both directions equally. The LLaDA paper documents this concretely on Chinese poem completion: forward 51.8% / reverse 45.6% for LLaDA, vs. forward 82.7% / reverse 34.3% for GPT-4o. GPT-4o is dramatically better forward and dramatically worse backward.</p>
+
+      <figure class="viz-figure viz-figure-wide">
+        <div class="viz-frame">
+          <div class="viz-label" data-i18n="viz20_1.label">Figure 20.1 — Reverse curse, side-by-side</div>
+          <div id="viz20-1" class="reverse-curse-viz"></div>
+        </div>
+      </figure>
+    </section>
+
+    <!-- ===== Sources / Footer ===== -->
+    <section class="section sources-section" id="sources">
+      <div class="sec-num">§</div>
+      <h2 class="sec-title" data-i18n="sources.title">Sources and further reading</h2>
+      <p data-i18n="sources.intro">Everything in this page is grounded in primary sources. Click any link to go to the original.</p>
+
+      <div class="sources-grid">
+        <div class="sources-col">
+          <h3 data-i18n="sources.foundations">Foundations</h3>
+          <ul>
+            <li><a href="https://arxiv.org/abs/2006.11239" target="_blank" rel="noopener">DDPM — Ho et al., 2020</a></li>
+            <li><a href="https://arxiv.org/abs/2107.03006" target="_blank" rel="noopener">D3PM — Austin et al., 2021</a></li>
+            <li><a href="https://arxiv.org/abs/2310.16834" target="_blank" rel="noopener">SEDD — Lou, Meng, Ermon, 2024</a></li>
+            <li><a href="https://arxiv.org/abs/2406.04329" target="_blank" rel="noopener">MD4 — Shi, Han et al., 2024</a></li>
+            <li><a href="https://arxiv.org/abs/2406.07524" target="_blank" rel="noopener">MDLM — Sahoo et al., 2024</a></li>
+            <li><a href="https://arxiv.org/abs/2410.18514" target="_blank" rel="noopener">SMDM — Nie et al., 2024</a></li>
+          </ul>
+        </div>
+        <div class="sources-col">
+          <h3 data-i18n="sources.deepmind">Google DeepMind</h3>
+          <ul>
+            <li><a href="https://deepmind.google/models/gemini-diffusion/" target="_blank" rel="noopener">Gemini Diffusion (model page)</a></li>
+            <li><a href="https://github.com/google-deepmind/md4" target="_blank" rel="noopener">google-deepmind/md4 (code)</a></li>
+            <li><a href="https://arxiv.org/abs/2401.17181" target="_blank" rel="noopener">AR2Diff — Han et al., 2024</a></li>
+          </ul>
+        </div>
+        <div class="sources-col">
+          <h3 data-i18n="sources.ant">Ant Group / inclusionAI</h3>
+          <ul>
+            <li><a href="https://arxiv.org/abs/2502.09992" target="_blank" rel="noopener">LLaDA paper — Nie et al., Feb 2025</a></li>
+            <li><a href="https://github.com/ML-GSAI/LLaDA" target="_blank" rel="noopener">ML-GSAI/LLaDA (code)</a></li>
+            <li><a href="https://arxiv.org/abs/2505.19223" target="_blank" rel="noopener">LLaDA 1.5 / VRPO — May 2025</a></li>
+            <li><a href="https://arxiv.org/abs/2509.24389" target="_blank" rel="noopener">LLaDA-MoE — Sep 2025</a></li>
+            <li><a href="https://arxiv.org/abs/2512.15745" target="_blank" rel="noopener">LLaDA2.0 — Dec 2025</a></li>
+            <li><a href="https://github.com/inclusionAI/LLaDA2.X" target="_blank" rel="noopener">inclusionAI/LLaDA2.X (code)</a></li>
+            <li><a href="https://huggingface.co/inclusionAI" target="_blank" rel="noopener">inclusionAI on HuggingFace</a></li>
+            <li><a href="https://www.lmsys.org/blog/2025-12-19-diffusion-llm/" target="_blank" rel="noopener">LMSYS — SGLang Day-0 LLaDA2.0</a></li>
+          </ul>
+        </div>
+        <div class="sources-col">
+          <h3 data-i18n="sources.inference">Inference</h3>
+          <ul>
+            <li><a href="https://arxiv.org/abs/2503.09573" target="_blank" rel="noopener">BD3-LM (Block Diffusion) — ICLR 2025</a></li>
+            <li><a href="https://nvlabs.github.io/Fast-dLLM/" target="_blank" rel="noopener">Fast-dLLM</a></li>
+            <li><a href="https://arxiv.org/abs/2510.04147" target="_blank" rel="noopener">SSD (Self-Speculative Diffusion) — 2025</a></li>
+            <li><a href="https://hkunlp.github.io/blog/2025/dreamon/" target="_blank" rel="noopener">DreamOn — variable-length diffusion</a></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-meta">
+          <span data-i18n="footer.built">Built as a portfolio explainer · 2026</span>
+        </div>
+        <div class="footer-links">
+          <a href="#top" data-i18n="footer.top">↑ Back to top</a>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Scripts -->
+  <script src="i18n.js" defer></script>
+  <script src="app.js" defer></script>
+  <script src="viz/hero.js" defer></script>
+  <script src="viz/sec1-ar-vs-diffusion.js" defer></script>
+  <script src="viz/sec2-image-diffusion.js" defer></script>
+  <script src="viz/sec3-token-vs-pixel.js" defer></script>
+  <script src="viz/sec4-d3pm.js" defer></script>
+  <script src="viz/sec5-mdlm-loss.js" defer></script>
+  <script src="viz/sec6-attention-mask.js" defer></script>
+  <script src="viz/sec7-arch-anatomy.js" defer></script>
+  <script src="viz/sec8-train-step.js" defer></script>
+  <script src="viz/sec9-schedule.js" defer></script>
+  <script src="viz/sec10-wsd.js" defer></script>
+  <script src="viz/sec11-denoise.js" defer></script>
+  <script src="viz/sec12-remask.js" defer></script>
+  <script src="viz/sec13-block.js" defer></script>
+  <script src="viz/sec14-cap.js" defer></script>
+  <script src="viz/sec15-t2t.js" defer></script>
+  <script src="viz/sec16-tradeoff.js" defer></script>
+  <script src="viz/sec17-deepmind.js" defer></script>
+  <script src="viz/sec18-llada.js" defer></script>
+  <script src="viz/sec19-playground.js" defer></script>
+  <script src="viz/sec20-reverse-curse.js" defer></script>
+</body>
+</html>

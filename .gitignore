@@ -1,0 +1,36 @@
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+
+# Claude Code session state
+.claude/
+logs/
+CLAUDE.md
+**/CLAUDE.md
+site/logs/
+
+# Local secrets / env
+.env
+.env.local
+.env.*.local
+
+# Node (in case anyone adds a build step later)
+node_modules/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+
+# Server logs from local previews
+*.log
+/tmp/
+
+# Third-party content (local research caches)
+BrrrViz*.html
+BrrrViz*.webarchive
