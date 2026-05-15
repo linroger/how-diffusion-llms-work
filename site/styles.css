@@ -30,15 +30,16 @@
   --font-sans: 'Inter', 'Noto Sans SC', 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
 
-  /* Layout — single shared column width so prose paragraphs and
-     wide visualizations sit on the same left and right margins. */
-  --content-max: 1080px;
-  --content-wide: 1080px;
-  --content-extra-wide: 1180px;
+  /* Layout — one shared column width.  Prose, figures, captions,
+     callouts, and bridges all fill the same 760px column so the left
+     and right edges line up everywhere on the page. */
+  --content-max: 760px;
+  --content-wide: 760px;
+  --content-extra-wide: 920px;
   --gutter: 40px;
   --section-spacing: 96px;
-  /* Comfortable reading line-length for prose; figures get the full column. */
-  --prose-measure: 72ch;
+  /* Prose and callouts fill the column instead of being capped narrower. */
+  --prose-measure: 100%;
 
   /* Motion */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -211,7 +212,6 @@ strong { font-weight: 600; color: #fbfaf7; }
   :root {
     --gutter: 18px;
     --section-spacing: 64px;
-    --prose-measure: 100%;
   }
   .hero { padding: 56px 0 36px; }
   .hero-title { font-size: clamp(2rem, 8vw, 2.6rem); }
@@ -2494,7 +2494,7 @@ a:hover {
 .x8-caption strong { color: var(--accent); font-style: normal; }
 
 /* Section bridge */
-.section-bridge { max-width: var(--prose-measure); margin: 40px auto 8px; padding: 18px 24px; font-family: var(--font-serif); font-style: italic; font-size: 1rem; color: var(--text-soft); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; line-height: 1.6; }
+.section-bridge { max-width: 100%; margin: 40px 0 8px; padding: 22px 0 20px; font-family: var(--font-serif); font-style: italic; font-size: 1.02rem; color: var(--text-soft); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: left; line-height: 1.65; }
 [data-lang="zh"] .section-bridge { font-family: var(--font-sans); font-style: normal; }
 .section-bridge strong { color: var(--text); font-style: normal; }
 
@@ -2654,8 +2654,8 @@ a:hover {
 
 /* "Connect the dots" bridge with stronger styling than .section-bridge */
 .bridge-narrative {
-  max-width: var(--prose-measure);
-  margin: 28px auto 12px;
+  max-width: 100%;
+  margin: 28px 0 12px;
   padding: 16px 22px 14px 44px;
   background: var(--bg-frame);
   border-left: 3px solid var(--accent-3);
@@ -2734,6 +2734,6 @@ a:hover {
 .x8-caption strong { color: var(--accent); font-style: normal; }
 
 /* Section bridge */
-.section-bridge { max-width: var(--prose-measure); margin: 40px auto 8px; padding: 18px 24px; font-family: var(--font-serif); font-style: italic; font-size: 1rem; color: var(--text-soft); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; line-height: 1.6; }
+.section-bridge { max-width: 100%; margin: 40px 0 8px; padding: 22px 0 20px; font-family: var(--font-serif); font-style: italic; font-size: 1.02rem; color: var(--text-soft); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: left; line-height: 1.65; }
 [data-lang="zh"] .section-bridge { font-family: var(--font-sans); font-style: normal; }
 .section-bridge strong { color: var(--text); font-style: normal; }
