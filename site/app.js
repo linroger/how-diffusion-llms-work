@@ -294,13 +294,11 @@
 
   const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
     "theme": "light",
-    "palette": "antblue",
     "density": "comfortable"
   }/*EDITMODE-END*/;
 
   function applyTweaks(state) {
     document.documentElement.setAttribute('data-theme', state.theme);
-    document.documentElement.setAttribute('data-palette', state.palette);
     document.documentElement.setAttribute('data-density', state.density);
     document.querySelectorAll('[data-tweak]').forEach((group) => {
       const key = group.getAttribute('data-tweak');
