@@ -4,6 +4,14 @@
 
 (function () {
   'use strict';
+  function __cssVar(name, fallback) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback || '#000';
+  }
+  function __resolveColor(s) {
+    if (typeof s !== 'string') return s;
+    return s.replace(/var\((--[\w-]+)\)/g, (_m, n) => __cssVar(n));
+  }
 
   const W = 480, H = 160;
   const TILE_W = 152, TILE_H = 120;
@@ -67,7 +75,7 @@
     const canvas = document.getElementById('viz2-1-canvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#11151f';
+    ctx.fillStyle = __resolveColor('var(--bg-frame-2)');
     ctx.fillRect(0, 0, W, H);
 
     if (!cleanImg) cleanImg = generateClean();
@@ -85,18 +93,18 @@
       imageData.data.set(tile.img);
       ctx.putImageData(imageData, tile.x, PAD_Y);
       // Border
-      ctx.strokeStyle = i === 1 ? '#f5b54a' : '#2e3648';
+      ctx.strokeStyle = i === 1 ? 'var(--accent)' : 'var(--border-strong)';
       ctx.lineWidth = i === 1 ? 2 : 1;
       ctx.strokeRect(tile.x - 0.5, PAD_Y - 0.5, TILE_W + 1, TILE_H + 1);
       // Label
-      ctx.fillStyle = '#a9a8a3';
+      ctx.fillStyle = __resolveColor('var(--text-soft)');
       ctx.font = '10px JetBrains Mono, monospace';
       ctx.textAlign = 'center';
       ctx.fillText(tile.label, tile.x + TILE_W / 2, PAD_Y + TILE_H + 14);
     });
 
     // Arrows
-    ctx.strokeStyle = '#6c6d72';
+    ctx.strokeStyle = __resolveColor('var(--text-muted)');
     ctx.lineWidth = 1;
     for (let i = 0; i < 2; i++) {
       const x1 = PAD_X + TILE_W + (TILE_W + GAP) * i;

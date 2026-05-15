@@ -21,13 +21,13 @@
           .attr('y', i * cell)
           .attr('width', cell - 0.5)
           .attr('height', cell - 0.5)
-          .attr('fill', allowed ? '#f5b54a' : '#1c2230')
+          .attr('fill', allowed ? 'var(--accent)' : 'var(--bg-frame-2)')
           .attr('opacity', allowed ? 0.85 : 1);
       }
     }
     // axis hint
-    g.append('text').attr('x', -4).attr('y', cell - 2).attr('fill', '#6c6d72').style('font-family', 'JetBrains Mono, monospace').style('font-size', '8px').attr('text-anchor', 'end').text('i');
-    g.append('text').attr('x', 0).attr('y', N * cell + 10).attr('fill', '#6c6d72').style('font-family', 'JetBrains Mono, monospace').style('font-size', '8px').text('j →');
+    g.append('text').attr('x', -4).attr('y', cell - 2).style('fill', 'var(--text-muted)').style('font-family', 'JetBrains Mono, monospace').style('font-size', '8px').attr('text-anchor', 'end').text('i');
+    g.append('text').attr('x', 0).attr('y', N * cell + 10).style('fill', 'var(--text-muted)').style('font-family', 'JetBrains Mono, monospace').style('font-size', '8px').text('j →');
   }
 
   function renderAll() {

@@ -71,7 +71,7 @@
       lbl.style.left = '4px';
       lbl.style.fontFamily = 'JetBrains Mono, monospace';
       lbl.style.fontSize = '0.7rem';
-      lbl.style.color = b === activeBlock ? '#f5b54a' : (b < activeBlock ? '#8ec07c' : '#6c6d72');
+      lbl.style.color = b === activeBlock ? 'var(--accent)' : (b < activeBlock ? 'var(--accent-4)' : 'var(--text-muted)');
       lbl.textContent = `block ${b}`;
       group.appendChild(lbl);
 
@@ -83,12 +83,12 @@
     const status = document.createElement('div');
     status.style.fontFamily = 'JetBrains Mono, monospace';
     status.style.fontSize = '0.84rem';
-    status.style.color = '#a9a8a3';
+    status.style.color = 'var(--text-soft)';
     status.style.marginTop = '20px';
     if (activeBlock >= numBlocks) {
-      status.innerHTML = `<span style="color:#8ec07c">✓ ${lang === 'zh' ? '所有块解码完毕' : 'all blocks decoded'}</span>`;
+      status.innerHTML = `<span style="color:var(--accent-4)">✓ ${lang === 'zh' ? '所有块解码完毕' : 'all blocks decoded'}</span>`;
     } else {
-      status.innerHTML = `<span>${lang === 'zh' ? '活跃块' : 'active block'}: <b style="color:#f5b54a">${activeBlock}</b></span>  ·  <span>${lang === 'zh' ? '块内步骤' : 'intra-block step'}: <b style="color:#f5b54a">${intraStep}</b> / 3</span>  ·  <span style="color:#8ec07c">${activeBlock} ${lang === 'zh' ? '块已缓存' : 'blocks cached'}</span>`;
+      status.innerHTML = `<span>${lang === 'zh' ? '活跃块' : 'active block'}: <b style="color:var(--accent)">${activeBlock}</b></span>  ·  <span>${lang === 'zh' ? '块内步骤' : 'intra-block step'}: <b style="color:var(--accent)">${intraStep}</b> / 3</span>  ·  <span style="color:var(--accent-4)">${activeBlock} ${lang === 'zh' ? '块已缓存' : 'blocks cached'}</span>`;
     }
     container.appendChild(status);
 
@@ -98,11 +98,11 @@
     legend.style.gap = '18px';
     legend.style.fontFamily = 'Inter, sans-serif';
     legend.style.fontSize = '0.76rem';
-    legend.style.color = '#a9a8a3';
+    legend.style.color = 'var(--text-soft)';
     legend.style.marginTop = '8px';
     legend.innerHTML = `
-      <span><span style="display:inline-block;width:10px;height:10px;background:#8ec07c;border-radius:2px;vertical-align:middle"></span> ${lang === 'zh' ? '已提交 + 缓存' : 'committed + cached'}</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#f5b54a;border-radius:2px;vertical-align:middle"></span> ${lang === 'zh' ? '活跃 (双向)' : 'active (bidirectional)'}</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:var(--accent-4);border-radius:2px;vertical-align:middle"></span> ${lang === 'zh' ? '已提交 + 缓存' : 'committed + cached'}</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:var(--accent);border-radius:2px;vertical-align:middle"></span> ${lang === 'zh' ? '活跃 (双向)' : 'active (bidirectional)'}</span>
       <span><span style="display:inline-block;width:10px;height:10px;background:#2a2e3a;border-radius:2px;border:1px solid #4a5066;vertical-align:middle"></span> ${lang === 'zh' ? '未解码' : 'not yet decoded'}</span>
     `;
     container.appendChild(legend);

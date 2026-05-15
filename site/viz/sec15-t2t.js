@@ -68,7 +68,7 @@
     const stageTitle = document.createElement('div');
     stageTitle.style.fontFamily = 'JetBrains Mono, monospace';
     stageTitle.style.fontSize = '0.86rem';
-    stageTitle.style.color = '#f5b54a';
+    stageTitle.style.color = 'var(--accent)';
     stageTitle.style.marginBottom = '12px';
     stageTitle.textContent = names[step];
     container.appendChild(stageTitle);
@@ -108,7 +108,7 @@
       const sets = document.createElement('div');
       sets.style.marginTop = '14px';
       sets.style.padding = '12px';
-      sets.style.background = '#1c2230';
+      sets.style.background = 'var(--bg-frame-2)';
       sets.style.borderRadius = '6px';
       sets.style.fontFamily = 'JetBrains Mono, monospace';
       sets.style.fontSize = '0.82rem';
@@ -116,13 +116,13 @@
         const wrongTok = n.thirdSentence[n.wrongIdx];
         const rightTok = n.afterEdit[n.wrongIdx];
         sets.innerHTML = `
-          <div style="color:#a9a8a3;margin-bottom:6px">${lang === 'zh' ? '编辑触发：' : 'Edit triggered:'}</div>
-          <div style="color:#e879a8">Δ_t = { ${n.wrongIdx}: "${wrongTok}" → "${rightTok}",  conf = 0.78 > τ_edit = ${tedit.toFixed(2)} ✓ }</div>
+          <div style="color:var(--text-soft);margin-bottom:6px">${lang === 'zh' ? '编辑触发：' : 'Edit triggered:'}</div>
+          <div style="color:var(--accent-3)">Δ_t = { ${n.wrongIdx}: "${wrongTok}" → "${rightTok}",  conf = 0.78 > τ_edit = ${tedit.toFixed(2)} ✓ }</div>
         `;
       } else {
         sets.innerHTML = `
-          <div style="color:#a9a8a3;margin-bottom:6px">${lang === 'zh' ? '编辑未触发 (τ_edit 太高)：' : 'Edit blocked (τ_edit too high):'}</div>
-          <div style="color:#6c6d72">Δ_t = { },  conf = 0.78 < τ_edit = ${tedit.toFixed(2)}</div>
+          <div style="color:var(--text-soft);margin-bottom:6px">${lang === 'zh' ? '编辑未触发 (τ_edit 太高)：' : 'Edit blocked (τ_edit too high):'}</div>
+          <div style="color:var(--text-muted)">Δ_t = { },  conf = 0.78 < τ_edit = ${tedit.toFixed(2)}</div>
         `;
       }
       container.appendChild(sets);
@@ -138,8 +138,8 @@
       dot.style.width = '24px';
       dot.style.height = '24px';
       dot.style.borderRadius = '50%';
-      dot.style.background = i === step ? '#f5b54a' : (i < step ? '#3b4458' : '#1c2230');
-      dot.style.color = i === step ? '#1a1308' : '#a9a8a3';
+      dot.style.background = i === step ? 'var(--accent)' : (i < step ? 'var(--border-strong)' : 'var(--bg-frame-2)');
+      dot.style.color = i === step ? 'var(--btn-text)' : 'var(--text-soft)';
       dot.style.display = 'flex';
       dot.style.alignItems = 'center';
       dot.style.justifyContent = 'center';

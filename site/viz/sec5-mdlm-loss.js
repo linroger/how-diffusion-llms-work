@@ -45,12 +45,12 @@
     g.append('g')
       .attr('transform', `translate(0,${innerH})`)
       .call(d3.axisBottom(xScale).ticks(5).tickFormat(d3.format('.1f')))
-      .selectAll('text').style('fill', '#a9a8a3').style('font-family', 'JetBrains Mono, monospace').style('font-size', '10px');
-    g.selectAll('.domain, .tick line').style('stroke', '#2e3648');
+      .selectAll('text').style('fill', 'var(--text-soft)').style('font-family', 'JetBrains Mono, monospace').style('font-size', '10px');
+    g.selectAll('.domain, .tick line').style('stroke', 'var(--border-strong)');
 
     g.append('g')
       .call(d3.axisLeft(yScale).ticks(4))
-      .selectAll('text').style('fill', '#a9a8a3').style('font-family', 'JetBrains Mono, monospace').style('font-size', '10px');
+      .selectAll('text').style('fill', 'var(--text-soft)').style('font-family', 'JetBrains Mono, monospace').style('font-size', '10px');
 
     // Curve: 1/t
     const data = d3.range(0.01, 1.01, 0.01).map((tt) => ({ t: tt, w: 1 / tt }));
@@ -58,7 +58,7 @@
     g.append('path')
       .datum(data)
       .attr('fill', 'none')
-      .attr('stroke', '#5fb0c7')
+      .style('stroke', 'var(--accent-2)')
       .attr('stroke-width', 2)
       .attr('d', line);
 
@@ -68,17 +68,17 @@
     g.append('line')
       .attr('x1', cx).attr('x2', cx)
       .attr('y1', cy).attr('y2', innerH)
-      .attr('stroke', '#f5b54a').attr('stroke-width', 1).attr('stroke-dasharray', '3,3');
-    g.append('circle').attr('cx', cx).attr('cy', cy).attr('r', 5).attr('fill', '#f5b54a');
+      .style('stroke', 'var(--accent)').attr('stroke-width', 1).attr('stroke-dasharray', '3,3');
+    g.append('circle').attr('cx', cx).attr('cy', cy).attr('r', 5).style('fill', 'var(--accent)');
 
     // Labels
     g.append('text')
       .attr('x', innerW).attr('y', -6).attr('text-anchor', 'end')
-      .attr('fill', '#a9a8a3').style('font-family', 'JetBrains Mono, monospace').style('font-size', '11px')
+      .style('fill', 'var(--text-soft)').style('font-family', 'JetBrains Mono, monospace').style('font-size', '11px')
       .text('w(t) = 1/t');
     g.append('text')
       .attr('x', innerW / 2).attr('y', innerH + 26).attr('text-anchor', 'middle')
-      .attr('fill', '#6c6d72').style('font-family', 'JetBrains Mono, monospace').style('font-size', '10px')
+      .style('fill', 'var(--text-muted)').style('font-family', 'JetBrains Mono, monospace').style('font-size', '10px')
       .text('mask rate t');
   }
 

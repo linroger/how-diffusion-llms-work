@@ -41,6 +41,7 @@
     const svg = d3.select('#viz10-1-chart');
     if (svg.empty()) return;
     svg.selectAll('*').remove();
+    const lang = document.documentElement.getAttribute('data-lang') || 'en';
     const W = 720, H = 220;
     const m = { top: 20, right: 30, bottom: 36, left: 60 };
     const iw = W - m.left - m.right;
@@ -52,39 +53,40 @@
 
     // Axes
     g.append('g').attr('transform', `translate(0,${ih})`).call(d3.axisBottom(x).ticks(5).tickFormat(d3.format('.0%')))
-      .selectAll('text').style('fill', '#a9a8a3').style('font-size', '10px').style('font-family', 'JetBrains Mono, monospace');
+      .selectAll('text').style('fill', 'var(--text-soft)').style('font-size', '10px').style('font-family', 'JetBrains Mono, monospace');
     g.append('g').call(d3.axisLeft(y).tickValues([1, 4, 32, 64, 512, 4096]).tickFormat(d3.format('d')))
-      .selectAll('text').style('fill', '#a9a8a3').style('font-size', '10px').style('font-family', 'JetBrains Mono, monospace');
-    g.selectAll('.domain, .tick line').style('stroke', '#2e3648');
+      .selectAll('text').style('fill', 'var(--text-soft)').style('font-size', '10px').style('font-family', 'JetBrains Mono, monospace');
+    g.selectAll('.domain, .tick line').style('stroke', 'var(--border-strong)');
 
     // Phase shading
+    const phaseLabels = lang === 'zh' ? { warmup: '预热 Warmup', stable: '稳定 Stable', decay: '退火 Decay' } : { warmup: 'Warmup', stable: 'Stable', decay: 'Decay' };
     const phaseBounds = [
-      { x0: 0, x1: 0.22, color: 'rgba(245, 181, 74, 0.06)', label: 'Warmup' },
-      { x0: 0.22, x1: 0.78, color: 'rgba(95, 176, 199, 0.06)', label: 'Stable' },
-      { x0: 0.78, x1: 1.0, color: 'rgba(232, 121, 168, 0.06)', label: 'Decay' },
+      { x0: 0, x1: 0.22, color: 'rgba(245, 181, 74, 0.06)', label: phaseLabels.warmup },
+      { x0: 0.22, x1: 0.78, color: 'rgba(95, 176, 199, 0.06)', label: phaseLabels.stable },
+      { x0: 0.78, x1: 1.0, color: 'rgba(232, 121, 168, 0.06)', label: phaseLabels.decay },
     ];
     phaseBounds.forEach((pb) => {
       g.append('rect').attr('x', x(pb.x0)).attr('y', 0).attr('width', x(pb.x1) - x(pb.x0)).attr('height', ih).attr('fill', pb.color);
       g.append('text').attr('x', x((pb.x0 + pb.x1) / 2)).attr('y', 14).attr('text-anchor', 'middle')
-        .attr('fill', '#a9a8a3').style('font-size', '10px').style('font-family', 'Inter, sans-serif').style('font-weight', '600')
+        .style('fill', 'var(--text-soft)').style('font-size', '10px').style('font-family', 'Inter, sans-serif').style('font-weight', '600')
         .style('letter-spacing', '0.1em').style('text-transform', 'uppercase').text(pb.label);
     });
 
     // Curve
     const data = d3.range(0, 1.001, 0.005).map((p) => ({ p, lb: lookupLb(p).lb }));
     const line = d3.line().x((d) => x(d.p)).y((d) => y(Math.max(1, d.lb))).curve(d3.curveMonotoneX);
-    g.append('path').datum(data).attr('fill', 'none').attr('stroke', '#f5b54a').attr('stroke-width', 2).attr('d', line);
+    g.append('path').datum(data).attr('fill', 'none').style('stroke', 'var(--accent)').attr('stroke-width', 2).attr('d', line);
 
     // Current point
     const cur = lookupLb(progress);
-    g.append('circle').attr('cx', x(progress)).attr('cy', y(Math.max(1, cur.lb))).attr('r', 6).attr('fill', '#f5b54a').attr('stroke', '#1c2230').attr('stroke-width', 2);
-    g.append('line').attr('x1', x(progress)).attr('x2', x(progress)).attr('y1', 0).attr('y2', ih).attr('stroke', '#f5b54a').attr('stroke-width', 1).attr('stroke-dasharray', '3,3').attr('opacity', 0.5);
+    g.append('circle').attr('cx', x(progress)).attr('cy', y(Math.max(1, cur.lb))).attr('r', 6).style('fill', 'var(--accent)').style('stroke', 'var(--bg-frame-2)').attr('stroke-width', 2);
+    g.append('line').attr('x1', x(progress)).attr('x2', x(progress)).attr('y1', 0).attr('y2', ih).style('stroke', 'var(--accent)').attr('stroke-width', 1).attr('stroke-dasharray', '3,3').attr('opacity', 0.5);
 
     // Axis labels
     g.append('text').attr('x', iw / 2).attr('y', ih + 28).attr('text-anchor', 'middle')
-      .attr('fill', '#6c6d72').style('font-family', 'JetBrains Mono, monospace').style('font-size', '10px').text('training progress');
+      .style('fill', 'var(--text-muted)').style('font-family', 'JetBrains Mono, monospace').style('font-size', '10px').text(lang === 'zh' ? '训练进度 →' : 'training progress →');
     g.append('text').attr('transform', `translate(-44, ${ih / 2}) rotate(-90)`).attr('text-anchor', 'middle')
-      .attr('fill', '#6c6d72').style('font-family', 'JetBrains Mono, monospace').style('font-size', '10px').text('block size L_B');
+      .style('fill', 'var(--text-muted)').style('font-family', 'JetBrains Mono, monospace').style('font-size', '10px').text(lang === 'zh' ? '块大小 L_B →' : 'block size L_B →');
   }
 
   function drawMaskPreview() {
@@ -103,13 +105,15 @@
         const bi = Math.floor(i / bs);
         const bj = Math.floor(j / bs);
         const allowed = bi === bj || bj < bi;
-        g.append('rect').attr('x', j * cell).attr('y', i * cell).attr('width', cell - 0.5).attr('height', cell - 0.5).attr('fill', allowed ? '#f5b54a' : '#1c2230').attr('opacity', allowed ? 0.85 : 1);
+        g.append('rect').attr('x', j * cell).attr('y', i * cell).attr('width', cell - 0.5).attr('height', cell - 0.5).attr('fill', allowed ? 'var(--accent)' : 'var(--bg-frame-2)').attr('opacity', allowed ? 0.85 : 1);
       }
     }
     const lbEl = document.getElementById('viz10-1-lb');
     const phaseEl = document.getElementById('viz10-1-phase');
+    const lang = document.documentElement.getAttribute('data-lang') || 'en';
+    const phaseTxt = lang === 'zh' ? { warmup: '预热', stable: '稳定', decay: '退火' } : { warmup: 'warmup', stable: 'stable', decay: 'decay' };
     if (lbEl) lbEl.textContent = cur.lb;
-    if (phaseEl) phaseEl.textContent = cur.phase;
+    if (phaseEl) phaseEl.textContent = phaseTxt[cur.phase] || cur.phase;
   }
 
   function tick() {

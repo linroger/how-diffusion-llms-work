@@ -78,6 +78,7 @@
     const step = () => {
       currentStep++;
       if (currentStep > 4) {
+        currentStep = 4;
         playing = false;
         return;
       }

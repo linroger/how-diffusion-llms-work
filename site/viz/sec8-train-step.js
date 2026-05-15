@@ -82,12 +82,12 @@
       const weight = (1 / t).toFixed(2);
       const final = (parseFloat(fakeLoss) * (1 / t)).toFixed(3);
       lossView.innerHTML = `
-        <span style="color:#a9a8a3">masked: <b style="color:#fbfaf7">${maskCount}</b></span>
-        <span style="color:#5fb0c7">CE = ${fakeLoss}</span>
-        <span style="color:#a9a8a3">×</span>
-        <span style="color:#f5b54a">1/t = ${weight}</span>
-        <span style="color:#a9a8a3">=</span>
-        <span style="color:#fbfaf7;font-weight:600">L = ${final}</span>
+        <span style="color:var(--text-soft)">masked: <b style="color:var(--text)">${maskCount}</b></span>
+        <span style="color:var(--accent-2)">CE = ${fakeLoss}</span>
+        <span style="color:var(--text-soft)">×</span>
+        <span style="color:var(--accent)">1/t = ${weight}</span>
+        <span style="color:var(--text-soft)">=</span>
+        <span style="color:var(--text);font-weight:600">L = ${final}</span>
       `;
     }
     container.appendChild(makeRow(steps[3], activeStep >= 3, lossView));
@@ -96,9 +96,9 @@
     const back = document.createElement('div');
     back.style.fontFamily = 'JetBrains Mono, monospace';
     back.style.fontSize = '0.86rem';
-    back.style.color = '#a9a8a3';
+    back.style.color = 'var(--text-soft)';
     if (activeStep >= 4) {
-      back.innerHTML = '<span style="color:#8ec07c">✓ ∂L/∂θ computed</span>  <span style="color:#5fb0c7">→ AdamW step</span>  <span style="color:#a9a8a3">→ next batch</span>';
+      back.innerHTML = '<span style="color:var(--accent-4)">✓ ∂L/∂θ computed</span>  <span style="color:var(--accent-2)">→ AdamW step</span>  <span style="color:var(--text-soft)">→ next batch</span>';
     }
     container.appendChild(makeRow(steps[4], activeStep >= 4, back));
   }
@@ -112,7 +112,7 @@
     const bodyWrap = document.createElement('div');
     if (typeof body === 'string') bodyWrap.textContent = body;
     else if (body) bodyWrap.appendChild(body);
-    else bodyWrap.innerHTML = '<span style="color:#a9a8a3">' + stepInfo.desc + '</span>';
+    else bodyWrap.innerHTML = '<span style="color:var(--text-soft)">' + stepInfo.desc + '</span>';
     row.appendChild(lbl);
     row.appendChild(bodyWrap);
     return row;

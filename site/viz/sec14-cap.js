@@ -69,7 +69,7 @@
       const conf = stepLog.length > 0 ? stepLog[Math.min(stepIdx, stepLog.length - 1)].confs[i] : confidences[i];
       bar.style.height = (conf * 100) + '%';
       const isMasked = stepLog.length > 0 && stepLog[Math.min(stepIdx, stepLog.length - 1)].masked[i];
-      bar.style.background = (!isMasked) ? '#8ec07c' : (conf > tau ? '#f5b54a' : '#3b4458');
+      bar.style.background = (!isMasked) ? 'var(--accent-4)' : (conf > tau ? 'var(--accent)' : 'var(--border-strong)');
       bar.style.borderRadius = '2px 2px 0 0';
       bar.title = `${tok}: ${conf.toFixed(2)}`;
       confChart.appendChild(bar);
@@ -79,9 +79,9 @@
     const tauLine = document.createElement('div');
     tauLine.style.position = 'relative';
     tauLine.style.height = '0';
-    tauLine.style.borderTop = '2px dashed #e879a8';
+    tauLine.style.borderTop = '2px dashed var(--accent-3)';
     tauLine.style.transform = `translateY(${-tau * 64}px)`;
-    tauLine.innerHTML = `<span style="position:absolute;right:0;top:-18px;font-family:JetBrains Mono,monospace;font-size:0.72rem;color:#e879a8">τ = ${tau.toFixed(2)}</span>`;
+    tauLine.innerHTML = `<span style="position:absolute;right:0;top:-18px;font-family:JetBrains Mono,monospace;font-size:0.72rem;color:var(--accent-3)">τ = ${tau.toFixed(2)}</span>`;
 
     const chartWrap = document.createElement('div');
     chartWrap.style.position = 'relative';
@@ -114,18 +114,18 @@
     stats.style.fontFamily = 'JetBrains Mono, monospace';
     stats.style.fontSize = '0.84rem';
     stats.style.marginTop = '10px';
-    stats.style.color = '#a9a8a3';
+    stats.style.color = 'var(--text-soft)';
     const finalSteps = stepLog.length;
     const finalCommitted = stepLog.length > 0 ? target.length - stepLog[stepLog.length - 1].masked.filter((m) => m).length : 0;
     const tpf = finalSteps > 0 ? (finalCommitted / finalSteps).toFixed(2) : '0.00';
     // Quality penalty for low tau (heuristic) — model 70.15 at 0.95, dropping toward 60 at 0.5
     const quality = (60 + (tau - 0.5) * 20.3).toFixed(1);
     stats.innerHTML = `
-      <span>${lang === 'zh' ? '总步骤' : 'steps'}: <b style="color:#fbfaf7">${finalSteps}</b></span>
+      <span>${lang === 'zh' ? '总步骤' : 'steps'}: <b style="color:var(--text)">${finalSteps}</b></span>
       &nbsp;·&nbsp;
-      <span>${lang === 'zh' ? '每前向 token' : 'tokens-per-forward'}: <b style="color:#f5b54a">${tpf}</b></span>
+      <span>${lang === 'zh' ? '每前向 token' : 'tokens-per-forward'}: <b style="color:var(--accent)">${tpf}</b></span>
       &nbsp;·&nbsp;
-      <span>${lang === 'zh' ? '模拟基准分' : 'simulated score'}: <b style="color:${parseFloat(quality) > 68 ? '#8ec07c' : (parseFloat(quality) > 64 ? '#f5b54a' : '#e879a8')}">${quality}</b></span>
+      <span>${lang === 'zh' ? '模拟基准分' : 'simulated score'}: <b style="color:${parseFloat(quality) > 68 ? 'var(--accent-4)' : (parseFloat(quality) > 64 ? 'var(--accent)' : 'var(--accent-3)')}">${quality}</b></span>
     `;
     container.appendChild(stats);
   }

@@ -42,6 +42,11 @@
     document.querySelectorAll('.lang-en').forEach((el) => el.classList.toggle('active', lang === 'en'));
     document.querySelectorAll('.lang-zh').forEach((el) => el.classList.toggle('active', lang === 'zh'));
 
+    // Re-render KaTeX math after content swap
+    if (window.renderMathInElement) {
+      try { window.renderMathInElement(document.body, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }], throwOnError: false }); } catch (e) {}
+    }
+
     // Notify visualizations (some may need to re-render text)
     window.dispatchEvent(new CustomEvent('langchange', { detail: { lang } }));
 
@@ -268,6 +273,89 @@
     initTOC();
     initSmoothScroll();
     initSectionReveal();
+    initTweaks();
+
+    // KaTeX renders after deferred scripts load — re-render then
+    window.addEventListener('load', () => {
+      if (window.renderMathInElement) {
+        try {
+          window.renderMathInElement(document.body, {
+            delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }],
+            throwOnError: false,
+          });
+        } catch (e) { console.warn('KaTeX render error', e); }
+      }
+    });
+  }
+
+  // ============================================================
+  // Tweaks panel — theme / palette / density
+  // ============================================================
+
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "theme": "light",
+    "palette": "antblue",
+    "density": "comfortable"
+  }/*EDITMODE-END*/;
+
+  function applyTweaks(state) {
+    document.documentElement.setAttribute('data-theme', state.theme);
+    document.documentElement.setAttribute('data-palette', state.palette);
+    document.documentElement.setAttribute('data-density', state.density);
+    document.querySelectorAll('[data-tweak]').forEach((group) => {
+      const key = group.getAttribute('data-tweak');
+      group.querySelectorAll('[data-value]').forEach((btn) => {
+        btn.classList.toggle('active', btn.getAttribute('data-value') === state[key]);
+      });
+    });
+    try { localStorage.setItem('diffusion-llm-tweaks', JSON.stringify(state)); } catch (e) {}
+  }
+
+  function initTweaks() {
+    // Load saved
+    let state = { ...TWEAK_DEFAULTS };
+    try {
+      const saved = localStorage.getItem('diffusion-llm-tweaks');
+      if (saved) state = { ...state, ...JSON.parse(saved) };
+    } catch (e) {}
+
+    applyTweaks(state);
+
+    const launcher = document.getElementById('tweaksLauncher');
+    const panel = document.getElementById('tweaksPanel');
+    const closeBtn = document.getElementById('tweaksClose');
+
+    function open() {
+      panel.classList.add('open');
+      launcher.classList.add('hidden');
+    }
+    function close() {
+      panel.classList.remove('open');
+      launcher.classList.remove('hidden');
+    }
+
+    launcher?.addEventListener('click', open);
+    closeBtn?.addEventListener('click', close);
+
+    document.querySelectorAll('[data-tweak]').forEach((group) => {
+      const key = group.getAttribute('data-tweak');
+      group.querySelectorAll('[data-value]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state[key] = btn.getAttribute('data-value');
+          applyTweaks(state);
+          window.dispatchEvent(new CustomEvent('palettechange', { detail: state }));
+        });
+      });
+    });
+
+    // Editor host integration (so the toolbar Tweaks toggle works)
+    window.addEventListener('message', (e) => {
+      const data = e.data;
+      if (!data || typeof data !== 'object') return;
+      if (data.type === '__activate_edit_mode') open();
+      if (data.type === '__deactivate_edit_mode') close();
+    });
+    try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch (e) {}
   }
 
   if (document.readyState === 'loading') {

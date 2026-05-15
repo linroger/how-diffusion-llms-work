@@ -25,8 +25,8 @@
     controls.style.marginBottom = '20px';
     controls.innerHTML = `
       <div>
-        <div style="font-family:Inter,sans-serif;font-size:0.74rem;color:#a9a8a3;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px">${lang === 'zh' ? '句子' : 'Sentence'}</div>
-        <select id="pg-sentence" style="width:100%;background:#1c2230;border:1px solid #2e3648;color:#e8e6e1;padding:6px 8px;border-radius:4px;font-family:JetBrains Mono,monospace;font-size:0.82rem">
+        <div style="font-family:Inter,sans-serif;font-size:0.74rem;color:var(--text-soft);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px">${lang === 'zh' ? '句子' : 'Sentence'}</div>
+        <select id="pg-sentence" style="width:100%;background:var(--bg-frame-2);border:1px solid var(--border-strong);color:var(--text);padding:6px 8px;border-radius:4px;font-family:JetBrains Mono,monospace;font-size:0.82rem">
           <option value="0">${lang === 'zh' ? '扩散模型生成…' : 'Diffusion models...'}</option>
           <option value="1">${lang === 'zh' ? '敏捷的棕色狐狸…' : 'The quick brown fox...'}</option>
           <option value="2">def add(a, b): return a + b</option>
@@ -34,16 +34,16 @@
         </select>
       </div>
       <div>
-        <div style="font-family:Inter,sans-serif;font-size:0.74rem;color:#a9a8a3;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px">${lang === 'zh' ? '块大小' : 'Block size'}: ${blockSize}</div>
+        <div style="font-family:Inter,sans-serif;font-size:0.74rem;color:var(--text-soft);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px">${lang === 'zh' ? '块大小' : 'Block size'}: ${blockSize}</div>
         <input type="range" id="pg-bs" min="2" max="8" value="${blockSize}" style="width:100%">
       </div>
       <div>
-        <div style="font-family:Inter,sans-serif;font-size:0.74rem;color:#a9a8a3;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px">${lang === 'zh' ? '每块步数' : 'Steps per block'}: ${totalSteps}</div>
+        <div style="font-family:Inter,sans-serif;font-size:0.74rem;color:var(--text-soft);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px">${lang === 'zh' ? '每块步数' : 'Steps per block'}: ${totalSteps}</div>
         <input type="range" id="pg-steps" min="1" max="6" value="${totalSteps}" style="width:100%">
       </div>
       <div>
-        <div style="font-family:Inter,sans-serif;font-size:0.74rem;color:#a9a8a3;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px">${lang === 'zh' ? '策略' : 'Strategy'}</div>
-        <select id="pg-strat" style="width:100%;background:#1c2230;border:1px solid #2e3648;color:#e8e6e1;padding:6px 8px;border-radius:4px;font-family:JetBrains Mono,monospace;font-size:0.82rem">
+        <div style="font-family:Inter,sans-serif;font-size:0.74rem;color:var(--text-soft);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px">${lang === 'zh' ? '策略' : 'Strategy'}</div>
+        <select id="pg-strat" style="width:100%;background:var(--bg-frame-2);border:1px solid var(--border-strong);color:var(--text);padding:6px 8px;border-radius:4px;font-family:JetBrains Mono,monospace;font-size:0.82rem">
           <option value="random">${lang === 'zh' ? '随机' : 'Random'}</option>
           <option value="lowconf" selected>${lang === 'zh' ? '低置信度' : 'Low-confidence'}</option>
           <option value="threshold">${lang === 'zh' ? '阈值' : 'Threshold'}</option>
@@ -56,7 +56,7 @@
     const vizArea = document.createElement('div');
     vizArea.style.minHeight = '120px';
     vizArea.style.padding = '20px';
-    vizArea.style.background = '#11151f';
+    vizArea.style.background = 'var(--bg-frame-2)';
     vizArea.style.borderRadius = '6px';
 
     const tokens = DLM.pickSentence(sentenceIdx);
@@ -72,7 +72,7 @@
       group.style.display = 'flex';
       group.style.gap = '3px';
       group.style.padding = '6px';
-      group.style.border = '1.5px ' + (b === activeBlock ? 'solid #f5b54a' : (b < activeBlock ? 'solid #8ec07c' : 'dashed #2e3648')) + '';
+      group.style.border = '1.5px ' + (b === activeBlock ? 'solid var(--accent)' : (b < activeBlock ? 'solid var(--accent-4)' : 'dashed var(--border-strong)')) + '';
       group.style.borderRadius = '6px';
       const start = b * blockSize;
       const end = Math.min(tokens.length, start + blockSize);
@@ -108,10 +108,10 @@
     status.style.marginTop = '14px';
     status.style.fontFamily = 'JetBrains Mono, monospace';
     status.style.fontSize = '0.82rem';
-    status.style.color = '#a9a8a3';
+    status.style.color = 'var(--text-soft)';
     const totalForwards = activeBlock * totalSteps + Math.min(intraStep, totalSteps);
     status.innerHTML = `
-      ${lang === 'zh' ? '总前向' : 'total forwards'}: <b style="color:#f5b54a">${totalForwards}</b>
+      ${lang === 'zh' ? '总前向' : 'total forwards'}: <b style="color:var(--accent)">${totalForwards}</b>
       &nbsp;·&nbsp;
       ${lang === 'zh' ? '块' : 'block'}: <b>${Math.min(activeBlock, numBlocks)} / ${numBlocks}</b>
       &nbsp;·&nbsp;

@@ -26,27 +26,27 @@
 
     // Axes
     g.append('g').attr('transform', `translate(0,${ih})`).call(d3.axisBottom(x).ticks(3))
-      .selectAll('text').style('fill', '#a9a8a3').style('font-size', '9px').style('font-family', 'JetBrains Mono, monospace');
+      .selectAll('text').style('fill', 'var(--text-soft)').style('font-size', '9px').style('font-family', 'JetBrains Mono, monospace');
     g.append('g').call(d3.axisLeft(y).ticks(3))
-      .selectAll('text').style('fill', '#a9a8a3').style('font-size', '9px').style('font-family', 'JetBrains Mono, monospace');
-    g.selectAll('.domain, .tick line').style('stroke', '#2e3648');
+      .selectAll('text').style('fill', 'var(--text-soft)').style('font-size', '9px').style('font-family', 'JetBrains Mono, monospace');
+    g.selectAll('.domain, .tick line').style('stroke', 'var(--border-strong)');
 
     Object.keys(schedules).forEach((s) => {
       const data = d3.range(0, 1.01, 0.02).map((t) => ({ t, v: schedules[s].alpha(t) }));
       const line = d3.line().x((d) => x(d.t)).y((d) => y(d.v)).curve(d3.curveBasis);
       g.append('path').datum(data)
         .attr('fill', 'none')
-        .attr('stroke', s === schedule ? '#f5b54a' : '#3b4458')
+        .attr('stroke', s === schedule ? 'var(--accent)' : 'var(--border-strong)')
         .attr('stroke-width', s === schedule ? 2.5 : 1.2)
         .attr('opacity', s === schedule ? 1 : 0.5)
         .attr('d', line);
     });
 
     g.append('text').attr('x', iw / 2).attr('y', -8).attr('text-anchor', 'middle')
-      .attr('fill', '#a9a8a3').style('font-size', '11px').style('font-family', 'JetBrains Mono, monospace')
+      .style('fill', 'var(--text-soft)').style('font-size', '11px').style('font-family', 'JetBrains Mono, monospace')
       .text('α(t) — fraction unmasked');
     g.append('text').attr('x', iw / 2).attr('y', ih + 24).attr('text-anchor', 'middle')
-      .attr('fill', '#6c6d72').style('font-size', '10px').style('font-family', 'JetBrains Mono, monospace').text('time t');
+      .style('fill', 'var(--text-muted)').style('font-size', '10px').style('font-family', 'JetBrains Mono, monospace').text('time t');
   }
 
   function drawWeight() {
@@ -63,27 +63,27 @@
     const y = d3.scaleLog().domain([1, 100]).range([ih, 0]).clamp(true);
 
     g.append('g').attr('transform', `translate(0,${ih})`).call(d3.axisBottom(x).ticks(3))
-      .selectAll('text').style('fill', '#a9a8a3').style('font-size', '9px').style('font-family', 'JetBrains Mono, monospace');
+      .selectAll('text').style('fill', 'var(--text-soft)').style('font-size', '9px').style('font-family', 'JetBrains Mono, monospace');
     g.append('g').call(d3.axisLeft(y).ticks(3))
-      .selectAll('text').style('fill', '#a9a8a3').style('font-size', '9px').style('font-family', 'JetBrains Mono, monospace');
-    g.selectAll('.domain, .tick line').style('stroke', '#2e3648');
+      .selectAll('text').style('fill', 'var(--text-soft)').style('font-size', '9px').style('font-family', 'JetBrains Mono, monospace');
+    g.selectAll('.domain, .tick line').style('stroke', 'var(--border-strong)');
 
     Object.keys(schedules).forEach((s) => {
       const data = d3.range(0.02, 1.0, 0.01).map((t) => ({ t, v: Math.min(100, schedules[s].weight(t)) }));
       const line = d3.line().x((d) => x(d.t)).y((d) => y(Math.max(1, d.v))).curve(d3.curveBasis);
       g.append('path').datum(data)
         .attr('fill', 'none')
-        .attr('stroke', s === schedule ? '#5fb0c7' : '#3b4458')
+        .attr('stroke', s === schedule ? 'var(--accent-2)' : 'var(--border-strong)')
         .attr('stroke-width', s === schedule ? 2.5 : 1.2)
         .attr('opacity', s === schedule ? 1 : 0.5)
         .attr('d', line);
     });
 
     g.append('text').attr('x', iw / 2).attr('y', -8).attr('text-anchor', 'middle')
-      .attr('fill', '#a9a8a3').style('font-size', '11px').style('font-family', 'JetBrains Mono, monospace')
+      .style('fill', 'var(--text-soft)').style('font-size', '11px').style('font-family', 'JetBrains Mono, monospace')
       .text('w(t) — induced loss weight (log)');
     g.append('text').attr('x', iw / 2).attr('y', ih + 24).attr('text-anchor', 'middle')
-      .attr('fill', '#6c6d72').style('font-size', '10px').style('font-family', 'JetBrains Mono, monospace').text('time t');
+      .style('fill', 'var(--text-muted)').style('font-size', '10px').style('font-family', 'JetBrains Mono, monospace').text('time t');
   }
 
   function init() {

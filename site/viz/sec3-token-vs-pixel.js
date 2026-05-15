@@ -1,6 +1,14 @@
 /* §3 — Pixel continuum vs token grid hover comparison */
 (function () {
   'use strict';
+  function __cssVar(name, fallback) {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback || '#000';
+  }
+  function __resolveColor(s) {
+    if (typeof s !== 'string') return s;
+    return s.replace(/var\((--[\w-]+)\)/g, (_m, n) => __cssVar(n));
+  }
 
   // Pixel pane: a gradient ramp; on hover, show value at mouse position.
   function initPixel() {
@@ -13,8 +21,8 @@
     const grad = ctx.createLinearGradient(0, 0, W, 0);
     grad.addColorStop(0, '#1e2233');
     grad.addColorStop(0.3, '#3b4d6e');
-    grad.addColorStop(0.6, '#5fb0c7');
-    grad.addColorStop(1, '#f5b54a');
+    grad.addColorStop(0.6, __resolveColor('var(--accent-2)'));
+    grad.addColorStop(1, __resolveColor('var(--accent)'));
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
 
@@ -56,7 +64,7 @@
       const tx = Math.min(hoverX + 8, W - 90);
       const ty = Math.min(hoverY + 18, H - 8);
       ctx.fillRect(tx, ty - 14, 84, 18);
-      ctx.fillStyle = '#fbfaf7';
+      ctx.fillStyle = __resolveColor('var(--text)');
       ctx.font = '10px JetBrains Mono, monospace';
       ctx.textAlign = 'left';
       ctx.fillText(`(${pix[0]}, ${pix[1]}, ${pix[2]})`, tx + 4, ty - 1);

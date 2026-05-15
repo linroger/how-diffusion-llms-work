@@ -44,11 +44,11 @@
   const BENCHMARKS_EN = [
     { name: 'HumanEval', diff: 89.6, ar: 90.2 },
     { name: 'MBPP', diff: 76.0, ar: 75.8 },
-    { name: 'LiveCodeBench v6', diff: 30.9, ar: 28.5 },
+    { name: 'LiveCodeBench', diff: 30.9, ar: 28.5 },
     { name: 'BigCodeBench', diff: 45.4, ar: 45.8 },
     { name: 'AIME 2025', diff: 23.3, ar: 20.0 },
     { name: 'GPQA Diamond', diff: 40.4, ar: 56.5 },
-    { name: 'BIG-Bench Hard', diff: 15.0, ar: 21.0 },
+    { name: 'BBH', diff: 15.0, ar: 21.0 },
     { name: 'Global MMLU', diff: 69.1, ar: 79.0 },
   ];
 
@@ -56,9 +56,11 @@
     const svg = d3.select('#viz17-2-svg');
     if (svg.empty()) return;
     svg.selectAll('*').remove();
-    const W = 480, H = 480;
+    svg.attr('viewBox', '0 0 560 480');
+    const lang = document.documentElement.getAttribute('data-lang') || 'en';
+    const W = 560, H = 480;
     const cx = W / 2, cy = H / 2;
-    const radius = 170;
+    const radius = 160;
     const g = svg.append('g').attr('transform', `translate(${cx},${cy})`);
 
     const N = BENCHMARKS_EN.length;
@@ -68,12 +70,12 @@
     const levels = 5;
     for (let l = 1; l <= levels; l++) {
       const r = (radius / levels) * l;
-      g.append('circle').attr('r', r).attr('fill', 'none').attr('stroke', '#1c2230').attr('stroke-width', 1);
+      g.append('circle').attr('r', r).attr('fill', 'none').style('stroke', 'var(--bg-frame-2)').attr('stroke-width', 1);
       // labels
       if (l === levels) {
-        g.append('text').attr('x', 4).attr('y', -r + 12).attr('fill', '#6c6d72').style('font-size', '9px').style('font-family', 'JetBrains Mono, monospace').text('100');
+        g.append('text').attr('x', 4).attr('y', -r + 12).style('fill', 'var(--text-muted)').style('font-size', '9px').style('font-family', 'JetBrains Mono, monospace').text('100');
       } else if (l === levels / 2 || l === 2) {
-        g.append('text').attr('x', 4).attr('y', -r + 12).attr('fill', '#6c6d72').style('font-size', '9px').style('font-family', 'JetBrains Mono, monospace').text((l * 20).toString());
+        g.append('text').attr('x', 4).attr('y', -r + 12).style('fill', 'var(--text-muted)').style('font-size', '9px').style('font-family', 'JetBrains Mono, monospace').text((l * 20).toString());
       }
     }
 
@@ -82,13 +84,13 @@
       const angle = -Math.PI / 2 + angleSlice * i;
       const ex = Math.cos(angle) * radius;
       const ey = Math.sin(angle) * radius;
-      g.append('line').attr('x1', 0).attr('y1', 0).attr('x2', ex).attr('y2', ey).attr('stroke', '#2e3648').attr('stroke-width', 1);
+      g.append('line').attr('x1', 0).attr('y1', 0).attr('x2', ex).attr('y2', ey).style('stroke', 'var(--border-strong)').attr('stroke-width', 1);
 
       // Label
       const lx = Math.cos(angle) * (radius + 24);
       const ly = Math.sin(angle) * (radius + 24);
       const txt = g.append('text').attr('x', lx).attr('y', ly).attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
-        .attr('fill', '#a9a8a3').style('font-family', 'Inter, sans-serif').style('font-size', '11px').style('font-weight', '500').text(b.name);
+        .style('fill', 'var(--text-soft)').style('font-family', 'Inter, sans-serif').style('font-size', '11px').style('font-weight', '500').text(b.name);
       // adjust text-anchor for left/right halves
       if (Math.cos(angle) > 0.3) txt.attr('text-anchor', 'start');
       else if (Math.cos(angle) < -0.3) txt.attr('text-anchor', 'end');
@@ -109,14 +111,18 @@
       });
     };
 
-    renderPolygon('ar', '#5fb0c7', 0.18);
-    renderPolygon('diff', '#f5b54a', 0.22);
+    const css = getComputedStyle(document.documentElement);
+    const accent = css.getPropertyValue('--accent').trim() || 'var(--accent)';
+    const accent2 = css.getPropertyValue('--accent-2').trim() || 'var(--accent-2)';
+    renderPolygon('ar', accent2, 0.18);
+    renderPolygon('diff', accent, 0.22);
   }
 
   function init() {
     renderTimeline();
     renderRadar();
-    window.addEventListener('langchange', renderTimeline);
+    window.addEventListener('langchange', () => { renderTimeline(); renderRadar(); });
+    window.addEventListener('palettechange', renderRadar);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

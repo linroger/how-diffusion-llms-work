@@ -32,14 +32,14 @@
         el.textContent = DLM.MASK;
       } else if (variant === 'uniform') {
         el.style.background = 'rgba(232, 121, 168, 0.12)';
-        el.style.borderColor = '#e879a8';
-        el.style.color = '#e879a8';
+        el.style.borderColor = 'var(--accent-3)';
+        el.style.color = 'var(--accent-3)';
         el.textContent = RANDOM_TOKENS[Math.floor(rng() * RANDOM_TOKENS.length)];
       } else {
         // gaussian
         el.style.background = 'rgba(95, 176, 199, 0.12)';
-        el.style.borderColor = '#5fb0c7';
-        el.style.color = '#5fb0c7';
+        el.style.borderColor = 'var(--accent-2)';
+        el.style.color = 'var(--accent-2)';
         el.textContent = gaussianReplace(tok, rng);
       }
       el.style.animationDelay = (i * 18) + 'ms';

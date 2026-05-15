@@ -36,7 +36,7 @@
     header.style.borderLeftColor = 'transparent';
     header.style.background = 'transparent';
     header.style.fontWeight = '600';
-    header.style.color = '#a9a8a3';
+    header.style.color = 'var(--text-soft)';
     header.style.fontSize = '0.74rem';
     header.style.textTransform = 'uppercase';
     header.style.letterSpacing = '0.08em';

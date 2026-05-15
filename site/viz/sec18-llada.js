@@ -48,6 +48,8 @@
     const container = document.getElementById('viz18-2');
     if (!container) return;
     container.innerHTML = '';
+    const css = getComputedStyle(document.documentElement);
+    const ACCENT = (css.getPropertyValue('--accent').trim() || 'var(--accent)');
 
     const lang = document.documentElement.getAttribute('data-lang') || 'en';
 
@@ -78,10 +80,10 @@
     const g = svg.append('g').attr('transform', 'translate(300, 180)');
 
     // Shared expert (center)
-    g.append('circle').attr('r', 22).attr('fill', '#f5b54a').attr('stroke', '#1c2230').attr('stroke-width', 2);
-    g.append('text').attr('text-anchor', 'middle').attr('dy', 4).attr('fill', '#1a1308').style('font-family', 'Inter, sans-serif').style('font-size', '10px').style('font-weight', '600').text('Shared');
+    g.append('circle').attr('r', 22).attr('fill', ACCENT).style('stroke', 'var(--bg-frame-2)').attr('stroke-width', 2);
+    g.append('text').attr('text-anchor', 'middle').attr('dy', 4).style('fill', 'var(--btn-text)').style('font-family', 'Inter, sans-serif').style('font-size', '10px').style('font-weight', '600').text(lang === 'zh' ? '共享' : 'Shared');
 
-    // Ring of 256 experts (we'll show 64 as dots arranged in a ring, representing the 256 logically)
+    // Ring of 256 experts
     const ringRadius = 130;
     const visibleExperts = 64; // visual cap
     const experts = [];
@@ -89,12 +91,12 @@
       const ang = (i / visibleExperts) * Math.PI * 2 - Math.PI / 2;
       const ex = Math.cos(ang) * ringRadius;
       const ey = Math.sin(ang) * ringRadius;
-      const c = g.append('circle').attr('cx', ex).attr('cy', ey).attr('r', 5).attr('fill', '#2e3648').attr('stroke', '#1c2230').attr('stroke-width', 1).attr('class', `expert expert-${i}`);
+      const c = g.append('circle').attr('cx', ex).attr('cy', ey).attr('r', 5).style('fill', 'var(--border-strong)').style('stroke', 'var(--bg-frame-2)').attr('stroke-width', 1).attr('class', `expert expert-${i}`);
       experts.push({ x: ex, y: ey, node: c });
     }
     // "Routed: 256, Active: 8" annotation
-    svg.append('text').attr('x', 300).attr('y', 24).attr('text-anchor', 'middle').attr('fill', '#a9a8a3').style('font-family', 'Inter, sans-serif').style('font-size', '12px').style('font-weight', '500').text(lang === 'zh' ? '路由专家：256 (此处显示 64) · 每 token 激活：top-8' : 'Routed experts: 256 (showing 64) · Activated per token: top-8');
-    svg.append('text').attr('x', 300).attr('y', 340).attr('text-anchor', 'middle').attr('fill', '#a9a8a3').style('font-family', 'Inter, sans-serif').style('font-size', '12px').text(lang === 'zh' ? '点击任意 token 查看其专家选择' : 'Hover any token to see its expert selection');
+    svg.append('text').attr('x', 300).attr('y', 24).attr('text-anchor', 'middle').style('fill', 'var(--text-soft)').style('font-family', 'Inter, sans-serif').style('font-size', '12px').style('font-weight', '500').text(lang === 'zh' ? '路由专家：256 (此处显示 64) · 每 token 激活：top-8' : 'Routed experts: 256 (showing 64) · Activated per token: top-8');
+    svg.append('text').attr('x', 300).attr('y', 340).attr('text-anchor', 'middle').style('fill', 'var(--text-soft)').style('font-family', 'Inter, sans-serif').style('font-size', '12px').text(lang === 'zh' ? '点击任意 token 查看其专家选择' : 'Hover any token to see its expert selection');
 
     // Active expert lines container
     const linesGroup = g.append('g').attr('class', 'routing-lines');
@@ -106,14 +108,14 @@
       while (chosen.size < 8) chosen.add(Math.floor(rng() * visibleExperts));
 
       // Reset
-      experts.forEach((e, i) => e.node.attr('fill', chosen.has(i) ? '#f5b54a' : '#2e3648').attr('r', chosen.has(i) ? 7 : 5));
+      experts.forEach((e, i) => e.node.attr('fill', chosen.has(i) ? ACCENT : 'var(--border-strong)').attr('r', chosen.has(i) ? 7 : 5));
       linesGroup.selectAll('*').remove();
 
       // Draw lines from center to chosen
       chosen.forEach((i) => {
         const e = experts[i];
         linesGroup.append('line').attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', 0)
-          .attr('stroke', '#f5b54a').attr('stroke-width', 1.2).attr('opacity', 0)
+          .attr('stroke', ACCENT).attr('stroke-width', 1.2).attr('opacity', 0)
           .transition().duration(400)
           .attr('x2', e.x).attr('y2', e.y).attr('opacity', 0.6);
       });
@@ -127,6 +129,7 @@
     renderTimeline();
     renderMoE();
     window.addEventListener('langchange', () => { renderTimeline(); renderMoE(); });
+    window.addEventListener('palettechange', renderMoE);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

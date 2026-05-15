@@ -3,10 +3,10 @@
   'use strict';
 
   const STRATEGIES = [
-    { id: 'random', en: 'Random', zh: '随机', desc_en: 'Pick positions uniformly at random.', desc_zh: '均匀随机选取位置。', color: '#6c6d72' },
-    { id: 'lowconf', en: 'Low-confidence', zh: '低置信度', desc_en: 'Commit highest-confidence positions; remask the rest.', desc_zh: '提交最高置信度位置；其余重新掩码。', color: '#5fb0c7' },
-    { id: 'threshold', en: 'Confidence-threshold (τ=0.7)', zh: '置信度阈值 (τ=0.7)', desc_en: 'Commit any position above τ.', desc_zh: '提交所有超过 τ 的位置。', color: '#f5b54a' },
-    { id: 'margin', en: 'Margin (top-1 − top-2)', zh: '差距 (top-1 − top-2)', desc_en: 'Commit positions with large margin between best two.', desc_zh: '提交两个最佳候选差距大的位置。', color: '#e879a8' },
+    { id: 'random', en: 'Random', zh: '随机', desc_en: 'Pick positions uniformly at random.', desc_zh: '均匀随机选取位置。', color: 'var(--text-muted)' },
+    { id: 'lowconf', en: 'Low-confidence', zh: '低置信度', desc_en: 'Commit highest-confidence positions; remask the rest.', desc_zh: '提交最高置信度位置；其余重新掩码。', color: 'var(--accent-2)' },
+    { id: 'threshold', en: 'Confidence-threshold (τ=0.7)', zh: '置信度阈值 (τ=0.7)', desc_en: 'Commit any position above τ.', desc_zh: '提交所有超过 τ 的位置。', color: 'var(--accent)' },
+    { id: 'margin', en: 'Margin (top-1 − top-2)', zh: '差距 (top-1 − top-2)', desc_en: 'Commit positions with large margin between best two.', desc_zh: '提交两个最佳候选差距大的位置。', color: 'var(--accent-3)' },
   ];
 
   const N = 8;
@@ -76,7 +76,7 @@
       const desc = document.createElement('div');
       desc.style.fontFamily = 'Inter, sans-serif';
       desc.style.fontSize = '0.78rem';
-      desc.style.color = '#a9a8a3';
+      desc.style.color = 'var(--text-soft)';
       desc.style.marginBottom = '10px';
       desc.textContent = lang === 'zh' ? s.desc_zh : s.desc_en;
       pane.appendChild(desc);

@@ -41,7 +41,7 @@
       header.className = 'denoise-step-header';
       const stepLabel = lang === 'zh' ? `第 ${s} 步` : `step ${s}`;
       const committed = target.filter((_, i) => commitOrder[i] <= s).length;
-      header.innerHTML = `<span>${stepLabel}</span><span style="color:#a9a8a3">${committed} / ${target.length} ${lang === 'zh' ? '已提交' : 'committed'}</span>`;
+      header.innerHTML = `<span>${stepLabel}</span><span style="color:var(--text-soft)">${committed} / ${target.length} ${lang === 'zh' ? '已提交' : 'committed'}</span>`;
       stepEl.appendChild(header);
 
       const strip = document.createElement('div');
