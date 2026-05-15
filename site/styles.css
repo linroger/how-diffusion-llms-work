@@ -30,12 +30,15 @@
   --font-sans: 'Inter', 'Noto Sans SC', 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
 
-  /* Layout */
-  --content-max: 880px;
-  --content-wide: 1120px;
-  --content-extra-wide: 1320px;
+  /* Layout — single shared column width so prose paragraphs and
+     wide visualizations sit on the same left and right margins. */
+  --content-max: 1080px;
+  --content-wide: 1080px;
+  --content-extra-wide: 1180px;
   --gutter: 40px;
   --section-spacing: 96px;
+  /* Comfortable reading line-length for prose; figures get the full column. */
+  --prose-measure: 72ch;
 
   /* Motion */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -208,6 +211,7 @@ strong { font-weight: 600; color: #fbfaf7; }
   :root {
     --gutter: 18px;
     --section-spacing: 64px;
+    --prose-measure: 100%;
   }
   .hero { padding: 56px 0 36px; }
   .hero-title { font-size: clamp(2rem, 8vw, 2.6rem); }
@@ -307,7 +311,7 @@ strong { font-weight: 600; color: #fbfaf7; }
 
 .section p {
   margin: 0 0 1.1em;
-  max-width: 76ch;
+  max-width: var(--prose-measure);
 }
 
 .section p + p { margin-top: -0.2em; }
@@ -355,7 +359,7 @@ strong { font-weight: 600; color: #fbfaf7; }
   font-size: 1.25rem;
   line-height: 1.55;
   color: var(--text-soft);
-  max-width: 72ch;
+  max-width: var(--prose-measure);
   margin: 0 0 48px;
 }
 
@@ -408,7 +412,7 @@ strong { font-weight: 600; color: #fbfaf7; }
 .hero-note {
   font-size: 0.95rem;
   color: var(--text-soft);
-  max-width: 72ch;
+  max-width: var(--prose-measure);
   font-style: italic;
 }
 
@@ -461,7 +465,7 @@ strong { font-weight: 600; color: #fbfaf7; }
   font-style: italic;
   color: var(--text-soft);
   font-size: 1.1rem;
-  max-width: 72ch;
+  max-width: var(--prose-measure);
   margin: 0;
 }
 
@@ -492,7 +496,7 @@ strong { font-weight: 600; color: #fbfaf7; }
 }
 
 .readable-list {
-  max-width: 76ch;
+  max-width: var(--prose-measure);
   padding-left: 22px;
   margin: 0 0 1.4em;
 }
@@ -509,7 +513,7 @@ strong { font-weight: 600; color: #fbfaf7; }
   border-radius: 4px;
   padding: 22px 24px 18px;
   margin: 32px 0;
-  max-width: 76ch;
+  max-width: var(--prose-measure);
 }
 
 .callout-math {
@@ -603,7 +607,7 @@ strong { font-weight: 600; color: #fbfaf7; }
   color: var(--text-soft);
   margin-top: 18px;
   padding: 0 4px;
-  max-width: 76ch;
+  max-width: var(--prose-measure);
 }
 
 [data-lang="zh"] .viz-figure figcaption { font-family: var(--font-sans); font-style: normal; }
@@ -1603,7 +1607,7 @@ a:hover {
   border-radius: 4px;
   padding: 18px 22px 14px 44px;
   margin: 28px 0;
-  max-width: 76ch;
+  max-width: var(--prose-measure);
   position: relative;
   font-size: 1rem;
   line-height: 1.6;
@@ -2490,7 +2494,7 @@ a:hover {
 .x8-caption strong { color: var(--accent); font-style: normal; }
 
 /* Section bridge */
-.section-bridge { max-width: 76ch; margin: 40px auto 8px; padding: 18px 24px; font-family: var(--font-serif); font-style: italic; font-size: 1rem; color: var(--text-soft); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; line-height: 1.6; }
+.section-bridge { max-width: var(--prose-measure); margin: 40px auto 8px; padding: 18px 24px; font-family: var(--font-serif); font-style: italic; font-size: 1rem; color: var(--text-soft); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; line-height: 1.6; }
 [data-lang="zh"] .section-bridge { font-family: var(--font-sans); font-style: normal; }
 .section-bridge strong { color: var(--text); font-style: normal; }
 
@@ -2504,7 +2508,7 @@ a:hover {
   border-radius: 4px;
   padding: 18px 22px 14px 44px;
   margin: 28px 0;
-  max-width: 76ch;
+  max-width: var(--prose-measure);
   position: relative;
   font-size: 1rem;
   line-height: 1.65;
@@ -2539,7 +2543,7 @@ a:hover {
 
 /* Inline "plain-English" translation paragraph that sits next to a math block */
 .plain-en {
-  max-width: 76ch;
+  max-width: var(--prose-measure);
   margin: 6px 0 18px;
   padding: 10px 0 0;
   font-size: 0.96rem;
@@ -2594,7 +2598,7 @@ a:hover {
 .preflight-lede {
   font-size: 1.02rem;
   color: var(--text-soft);
-  max-width: 72ch;
+  max-width: var(--prose-measure);
   margin: 0 0 24px;
   line-height: 1.65;
 }
@@ -2650,7 +2654,7 @@ a:hover {
 
 /* "Connect the dots" bridge with stronger styling than .section-bridge */
 .bridge-narrative {
-  max-width: 78ch;
+  max-width: var(--prose-measure);
   margin: 28px auto 12px;
   padding: 16px 22px 14px 44px;
   background: var(--bg-frame);
@@ -2730,6 +2734,6 @@ a:hover {
 .x8-caption strong { color: var(--accent); font-style: normal; }
 
 /* Section bridge */
-.section-bridge { max-width: 76ch; margin: 40px auto 8px; padding: 18px 24px; font-family: var(--font-serif); font-style: italic; font-size: 1rem; color: var(--text-soft); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; line-height: 1.6; }
+.section-bridge { max-width: var(--prose-measure); margin: 40px auto 8px; padding: 18px 24px; font-family: var(--font-serif); font-style: italic; font-size: 1rem; color: var(--text-soft); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; line-height: 1.6; }
 [data-lang="zh"] .section-bridge { font-family: var(--font-sans); font-style: normal; }
 .section-bridge strong { color: var(--text); font-style: normal; }
